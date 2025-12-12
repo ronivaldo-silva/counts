@@ -33,8 +33,8 @@ if __name__ == "__main__":
     import os
     
     # No Render, usar a porta fornecida pela variável PORT
-    # Em desenvolvimento local, usar 8080 como padrão
-    port = int(os.getenv("PORT", 8080))
+    # Em desenvolvimento local, usar 8400 como padrão
+    port = int(os.getenv("PORT", 8400))
     
     # Para deploy web, usar WEB_APPLICATION ao invés de WEB_BROWSER
     # host="0.0.0.0" permite aceitar conexões de qualquer origem (necessário no Render)
