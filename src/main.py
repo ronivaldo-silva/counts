@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # host="0.0.0.0" permite aceitar conexões de qualquer origem (necessário no Render)
     ft.app(
         target=main,
-        view=ft.AppView.WEB_APPLICATION,
+        view=ft.AppView.FLET_APP_WEB,
         port=port,
         host="0.0.0.0"
     )
