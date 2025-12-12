@@ -1,7 +1,7 @@
 import flet as ft
 from views.login_view import LoginView
 from controllers.login_controller import LoginController
-from database.config import engine, Base
+from database.config import engine, Base, seed_basic_data
 
 def main(page: ft.Page):
     """
@@ -10,6 +10,9 @@ def main(page: ft.Page):
     """
     # Create Tables (if they don't exist)
     Base.metadata.create_all(bind=engine)
+    
+    # Seed basic data (categories, classifications, admin user)
+    seed_basic_data()
 
     page.title = "Sistema de Gestão Financeira"
     page.theme_mode = ft.ThemeMode.LIGHT
