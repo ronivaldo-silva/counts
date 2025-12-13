@@ -1,8 +1,8 @@
 import flet as ft
-from datetime import datetime
+from datetime import datetime, date
 from database.config import SessionLocal
 from repositories.user_repository import UsuarioRepository
-from repositories.transaction_repository import RegistroRepository
+from repositories.transaction_repository import RegistroRepository, CategoriasRepository
 
 class GestaoController:
     """
@@ -16,6 +16,7 @@ class GestaoController:
         self.db = SessionLocal()
         self.user_repo = UsuarioRepository(self.db)
         self.trans_repo = RegistroRepository(self.db)
+        self.cat_repo = CategoriasRepository(self.db)
 
     def set_view(self, view):
         """Sets the reference to the View."""
@@ -68,6 +69,7 @@ class GestaoController:
             "cpf": user_cpf,
             "nome": user_name,
             "categoria": category_name,
+            "categoria_id": trans.category_id,  # ID da categoria para uso em dropdowns
             "valor": trans.valor, 
             "data_divida": data_divida_str,
             "data_prevista": data_prevista_str,
@@ -263,13 +265,56 @@ class GestaoController:
         else:
             self.view.show_message("Erro ao remover transação.", ft.Colors.RED)
 
+    def get_categorias(self):
+        """Returns the list of categories as dicts."""
+        categories = self.cat_repo.get_all()
+        return [{"id": u.id, "categoria": u.categoria} for u in categories]
+
     # ==========================
     # Reports / Metrics
     # ==========================
 
-    def get_metrics(self):
-        """Calculates global metrics for the dashboard."""
-        return self.trans_repo.get_summary_metrics()
+    def get_metrics(self, user_cpf=None, data_inicial=None, data_final=None, categoria=None, tipo=None):
+        """
+        Calcula métricas globais para o dashboard com filtros opcionais.
+        
+        Args:
+            user_cpf (str, optional): CPF do usuário
+            data_inicial (date, optional): Data inicial do intervalo
+            data_final (date, optional): Data final do intervalo
+            categoria (str, optional): Nome da categoria
+            tipo (str, optional): Tipo da transação ('DEBT', 'PAYMENT', ou None para todos)
+        """
+        return self.trans_repo.get_summary_metrics(
+            user_cpf=user_cpf,
+            data_inicial=data_inicial,
+            data_final=data_final,
+            categoria=categoria,
+            tipo=tipo
+        )
+    
+    def get_filtered_transactions(self, user_cpf=None, data_inicial=None, data_final=None, categoria=None, tipo=None):
+        """
+        Retorna transações filtradas por múltiplos critérios em formato de dicionário.
+        
+        Args:
+            user_cpf (str, optional): CPF do usuário
+            data_inicial (date, optional): Data inicial do intervalo
+            data_final (date, optional): Data final do intervalo
+            categoria (str, optional): Nome da categoria
+            tipo (str, optional): Tipo da transação ('DEBT', 'PAYMENT', ou None para todos)
+        
+        Returns:
+            list: Lista de dicionários com transações filtradas
+        """
+        transactions = self.trans_repo.get_with_filters(
+            user_cpf=user_cpf,
+            data_inicial=data_inicial,
+            data_final=data_final,
+            categoria=categoria,
+            tipo=tipo
+        )
+        return [self._trans_to_dict(t) for t in transactions]
 
     # ==========================
     # Authentication

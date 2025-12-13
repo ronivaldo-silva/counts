@@ -68,6 +68,69 @@ class RegistroRepository:
         return self.db.query(Registro).join(Usuario).options(
             # Eager load relationships
         ).filter(Registro.type_id == type_id).all()
+    
+    def get_with_filters(self, user_cpf=None, data_inicial=None, data_final=None, categoria=None, tipo=None):
+        """
+        Retorna transações filtradas por múltiplos critérios.
+        
+        Args:
+            user_cpf (str, optional): CPF do usuário
+            data_inicial (date, optional): Data inicial do intervalo
+            data_final (date, optional): Data final do intervalo
+            categoria (str, optional): Nome da categoria
+            tipo (str, optional): Tipo da transação ('DEBT', 'PAYMENT', ou None para todos)
+        
+        Returns:
+            list: Lista de objetos Registro filtrados
+        """
+        query = self.db.query(Registro).join(Usuario)
+        
+        # Filtro por usuário (CPF)
+        if user_cpf:
+            query = query.filter(Usuario.cpf == user_cpf)
+        
+        # Filtro por tipo (DEBT=0 ou PAYMENT=1)
+        if tipo and tipo in ['DEBT', 'PAYMENT']:
+            type_id = 0 if tipo == 'DEBT' else 1
+            query = query.filter(Registro.type_id == type_id)
+        
+        # Filtro por categoria
+        if categoria:
+            cat_obj = self.db.query(Categoria).filter(Categoria.categoria == categoria).first()
+            if cat_obj:
+                query = query.filter(Registro.category_id == cat_obj.id)
+        
+        # Filtro por intervalo de datas
+        # Para DEBT, verificamos data_debito; para PAYMENT, verificamos data_entrada
+        if data_inicial or data_final:
+            # Se tipo específico foi selecionado, filtramos o campo de data correspondente
+            if tipo == 'DEBT':
+                if data_inicial:
+                    query = query.filter(Registro.data_debito >= data_inicial)
+                if data_final:
+                    query = query.filter(Registro.data_debito <= data_final)
+            elif tipo == 'PAYMENT':
+                if data_inicial:
+                    query = query.filter(Registro.data_entrada >= data_inicial)
+                if data_final:
+                    query = query.filter(Registro.data_entrada <= data_final)
+            else:
+                # Se tipo não foi especificado, filtramos ambos os tipos de data
+                if data_inicial and data_final:
+                    query = query.filter(
+                        ((Registro.data_debito >= data_inicial) & (Registro.data_debito <= data_final)) |
+                        ((Registro.data_entrada >= data_inicial) & (Registro.data_entrada <= data_final))
+                    )
+                elif data_inicial:
+                    query = query.filter(
+                        (Registro.data_debito >= data_inicial) | (Registro.data_entrada >= data_inicial)
+                    )
+                elif data_final:
+                    query = query.filter(
+                        (Registro.data_debito <= data_final) | (Registro.data_entrada <= data_final)
+                    )
+        
+        return query.all()
 
     def get_by_user(self, user_id: int):
         return self.db.query(Registro).filter(Registro.user_id == user_id).all()
@@ -107,13 +170,58 @@ class RegistroRepository:
             return True
         return False
 
-    def get_summary_metrics(self):
-        """Calculates global totals."""
-        total_debts = self.db.query(func.sum(Registro.valor)).filter(Registro.type_id == 0).scalar() or 0.0
-        total_payments = self.db.query(func.sum(Registro.valor)).filter(Registro.type_id == 1).scalar() or 0.0
+    def get_summary_metrics(self, user_cpf=None, data_inicial=None, data_final=None, categoria=None, tipo=None):
+        """
+        Calcula métricas totais, com suporte a filtros.
         
-        max_debt = self.db.query(func.max(Registro.valor)).filter(Registro.type_id == 0).scalar() or 0.0
-        max_payment = self.db.query(func.max(Registro.valor)).filter(Registro.type_id == 1).scalar() or 0.0
+        Args:
+            user_cpf (str, optional): CPF do usuário
+            data_inicial (date, optional): Data inicial do intervalo
+            data_final (date, optional): Data final do intervalo
+            categoria (str, optional): Nome da categoria
+            tipo (str, optional): Tipo da transação ('DEBT', 'PAYMENT', ou None para todos)
+        """
+        # Query base para dívidas
+        debt_query = self.db.query(func.sum(Registro.valor)).filter(Registro.type_id == 0)
+        debt_max_query = self.db.query(func.max(Registro.valor)).filter(Registro.type_id == 0)
+        
+        # Query base para entradas
+        payment_query = self.db.query(func.sum(Registro.valor)).filter(Registro.type_id == 1)
+        payment_max_query = self.db.query(func.max(Registro.valor)).filter(Registro.type_id == 1)
+        
+        # Aplicar filtros comuns
+        if user_cpf:
+            debt_query = debt_query.join(Usuario).filter(Usuario.cpf == user_cpf)
+            debt_max_query = debt_max_query.join(Usuario).filter(Usuario.cpf == user_cpf)
+            payment_query = payment_query.join(Usuario).filter(Usuario.cpf == user_cpf)
+            payment_max_query = payment_max_query.join(Usuario).filter(Usuario.cpf == user_cpf)
+        
+        if categoria:
+            cat_obj = self.db.query(Categoria).filter(Categoria.categoria == categoria).first()
+            if cat_obj:
+                debt_query = debt_query.filter(Registro.category_id == cat_obj.id)
+                debt_max_query = debt_max_query.filter(Registro.category_id == cat_obj.id)
+                payment_query = payment_query.filter(Registro.category_id == cat_obj.id)
+                payment_max_query = payment_max_query.filter(Registro.category_id == cat_obj.id)
+        
+        # Filtros de data
+        if data_inicial:
+            debt_query = debt_query.filter(Registro.data_debito >= data_inicial)
+            debt_max_query = debt_max_query.filter(Registro.data_debito >= data_inicial)
+            payment_query = payment_query.filter(Registro.data_entrada >= data_inicial)
+            payment_max_query = payment_max_query.filter(Registro.data_entrada >= data_inicial)
+        
+        if data_final:
+            debt_query = debt_query.filter(Registro.data_debito <= data_final)
+            debt_max_query = debt_max_query.filter(Registro.data_debito <= data_final)
+            payment_query = payment_query.filter(Registro.data_entrada <= data_final)
+            payment_max_query = payment_max_query.filter(Registro.data_entrada <= data_final)
+        
+        # Executar queries
+        total_debts = debt_query.scalar() or 0.0
+        total_payments = payment_query.scalar() or 0.0
+        max_debt = debt_max_query.scalar() or 0.0
+        max_payment = payment_max_query.scalar() or 0.0
         
         return {
             "total_dividas": total_debts,
@@ -196,3 +304,29 @@ class RegistroRepository:
             "maior_pago": max_paid,
             "divida_antiga": divida_antiga
         }
+
+class CategoriasRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_all(self):
+        return self.db.query(Categoria).all()
+
+    def get_info_to_card(self, user_id):
+        """Retorn Todas as categorias concatenadas com a quantidade de registros de dividas por usuário
+
+        Args:
+            user_id (int): ID do usuário
+        
+        Returns:
+            dict: {'id': <id>, 'categoria': <Categoria1> (<Quantidade>)}
+        """
+        return self.db.query(Categoria).filter(Categoria.user_id == user_id).all()
+    
+
+    def create(self, categoria: str, repete: bool):
+        cat_obj = Categoria(categoria=categoria, repete=repete)
+        self.db.add(cat_obj)
+        self.db.commit()
+        self.db.refresh(cat_obj)
+        return cat_obj

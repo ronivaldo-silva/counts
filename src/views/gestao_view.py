@@ -225,11 +225,126 @@ class GestaoView(ft.Column):
         )
 
     def _build_relatorios_tab(self):
-        """Builds the Reports Tab."""
+        """Builds the Reports Tab with Filters."""
+        # Filtros
+        users = self.controller.get_usuarios()
+        user_opts = [ft.dropdown.Option(key="", text="Todos")] + [
+            ft.dropdown.Option(key=u['cpf'], text=f"{u['nome']} ({u['cpf']})") for u in users
+        ]
+        
+        self.filter_user = ft.Dropdown(
+            label="Usuário",
+            width=300,
+            options=user_opts,
+            value="",
+            enable_filter=True,
+            leading_icon=ft.Icons.PERSON
+        )
+        
+        categorias = self.controller.get_categorias()
+        cat_opts = [ft.dropdown.Option(key="", text="Todas")] + [
+            ft.dropdown.Option(key=c['categoria'], text=c['categoria']) for c in categorias
+        ]
+        
+        self.filter_categoria = ft.Dropdown(
+            label="Categoria",
+            width=250,
+            options=cat_opts,
+            value=""
+        )
+        
+        self.filter_tipo = ft.Dropdown(
+            label="Tipo",
+            width=200,
+            options=[
+                ft.dropdown.Option(key="", text="Todos"),
+                ft.dropdown.Option(key="DEBT", text="Dívidas"),
+                ft.dropdown.Option(key="PAYMENT", text="Entradas"),
+            ],
+            value=""
+        )
+        
+        # Date Pickers para filtros
+        self.filter_data_inicial = ft.TextField(
+            label="Data Inicial",
+            width=200,
+            read_only=True,
+            value="",
+            hint_text="Selecione",
+            suffix=ft.IconButton(
+                icon=ft.Icons.CALENDAR_MONTH,
+                on_click=lambda e: self.page.open(self.filter_date_picker_inicial)
+            )
+        )
+        
+        self.filter_data_final = ft.TextField(
+            label="Data Final",
+            width=200,
+            read_only=True,
+            value="",
+            hint_text="Selecione",
+            suffix=ft.IconButton(
+                icon=ft.Icons.CALENDAR_MONTH,
+                on_click=lambda e: self.page.open(self.filter_date_picker_final)
+            )
+        )
+        
+        # Criar DatePickers se não existirem
+        if not hasattr(self, 'filter_date_picker_inicial'):
+            self.filter_date_picker_inicial = ft.DatePicker(
+                on_change=lambda e: self._on_filter_date_inicial_change(e),
+                first_date=datetime(2020, 1, 1),
+                last_date=datetime(2030, 12, 31)
+            )
+            self.page.overlay.append(self.filter_date_picker_inicial)
+        
+        if not hasattr(self, 'filter_date_picker_final'):
+            self.filter_date_picker_final = ft.DatePicker(
+                on_change=lambda e: self._on_filter_date_final_change(e),
+                first_date=datetime(2020, 1, 1),
+                last_date=datetime(2030, 12, 31)
+            )
+            self.page.overlay.append(self.filter_date_picker_final)
+        
+        # Linha de Filtros
+        filters_row = ft.Container(
+            content=ft.Column([
+                ft.Text("Filtros", size=18, weight=ft.FontWeight.BOLD),
+                ft.Row([
+                    self.filter_user,
+                    self.filter_categoria,
+                    self.filter_tipo,
+                ], wrap=True, spacing=10),
+                ft.Row([
+                    self.filter_data_inicial,
+                    self.filter_data_final,
+                    ft.ElevatedButton(
+                        "Aplicar Filtros",
+                        icon=ft.Icons.FILTER_ALT,
+                        bgcolor=ft.Colors.BLUE,
+                        color=ft.Colors.WHITE,
+                        on_click=lambda e: self.update_reports()
+                    ),
+                    ft.ElevatedButton(
+                        "Limpar Filtros",
+                        icon=ft.Icons.CLEAR,
+                        bgcolor=ft.Colors.ORANGE,
+                        color=ft.Colors.WHITE,
+                        on_click=lambda e: self._clear_filters()
+                    ),
+                ], wrap=True, spacing=10),
+            ]),
+            padding=15,
+            bgcolor=ft.Colors.GREY_100,
+            border_radius=10,
+            margin=ft.margin.only(bottom=20)
+        )
+        
         self.report_table = ft.DataTable(
             columns=[
                 ft.DataColumn(ft.Text("Tipo")),
                 ft.DataColumn(ft.Text("CPF")),
+                ft.DataColumn(ft.Text("Nome")),
                 ft.DataColumn(ft.Text("Categoria")),
                 ft.DataColumn(ft.Text("Valor"), numeric=True),
                 ft.DataColumn(ft.Text("Data")),
@@ -244,13 +359,12 @@ class GestaoView(ft.Column):
 
         return ft.Container(
             content=ft.Column([
+                filters_row,
+                ft.Divider(),
                 ft.Text("Métricas", size=20, weight=ft.FontWeight.BOLD),
                 self.metrics_container,
                 ft.Divider(),
                 ft.Text("Histórico Geral", size=20, weight=ft.FontWeight.BOLD),
-                ft.Row([
-                    ft.ElevatedButton("Atualizar Relatórios", on_click=lambda e: self.update_reports())
-                ]),
                 ft.Column([self.report_table], scroll=ft.ScrollMode.AUTO, height=400)
             ], scroll=ft.ScrollMode.AUTO),
             padding=20
@@ -357,8 +471,46 @@ class GestaoView(ft.Column):
         self.page.update()
 
     def update_reports(self):
-        """Refreshes Metrics and Report Table."""
-        metrics = self.controller.get_metrics()
+        """Refreshes Metrics and Report Table with applied filters."""
+        from datetime import datetime as dt
+        
+        # Coletar valores dos filtros
+        user_cpf = None
+        data_inicial = None
+        data_final = None
+        categoria = None
+        tipo = None
+        
+        if hasattr(self, 'filter_user') and self.filter_user.value:
+            user_cpf = self.filter_user.value if self.filter_user.value != "" else None
+        
+        if hasattr(self, 'filter_categoria') and self.filter_categoria.value:
+            categoria = self.filter_categoria.value if self.filter_categoria.value != "" else None
+        
+        if hasattr(self, 'filter_tipo') and self.filter_tipo.value:
+            tipo = self.filter_tipo.value if self.filter_tipo.value != "" else None
+        
+        if hasattr(self, 'filter_data_inicial') and self.filter_data_inicial.value:
+            try:
+                data_inicial = dt.strptime(self.filter_data_inicial.value, "%Y-%m-%d").date() if self.filter_data_inicial.value else None
+            except ValueError:
+                data_inicial = None
+        
+        if hasattr(self, 'filter_data_final') and self.filter_data_final.value:
+            try:
+                data_final = dt.strptime(self.filter_data_final.value, "%Y-%m-%d").date() if self.filter_data_final.value else None
+            except ValueError:
+                data_final = None
+        
+        # Atualizar métricas com filtros
+        metrics = self.controller.get_metrics(
+            user_cpf=user_cpf,
+            data_inicial=data_inicial,
+            data_final=data_final,
+            categoria=categoria,
+            tipo=tipo
+        )
+        
         self.metrics_container.controls = [
             self._build_metric_card("Total Dívidas", f"R$ {metrics['total_dividas']:.2f}", ft.Colors.RED_400),
             self._build_metric_card("Total Entradas", f"R$ {metrics['total_entradas']:.2f}", ft.Colors.GREEN_400),
@@ -366,24 +518,32 @@ class GestaoView(ft.Column):
             self._build_metric_card("Maior Entrada", f"R$ {metrics['maior_entrada']:.2f}", ft.Colors.BLUE_400),
         ]
 
-        # Update Table logic could be richer (merged list sorted by date)
-        # For now, simple concatenation
+        # Atualizar tabela com transações filtradas
+        transactions = self.controller.get_filtered_transactions(
+            user_cpf=user_cpf,
+            data_inicial=data_inicial,
+            data_final=data_final,
+            categoria=categoria,
+            tipo=tipo
+        )
+        
         rows = []
-        for d in self.controller.get_dividas():
+        for t in transactions:
+            # Determinar cor e tipo baseado no type
+            if t['type'] == 'DEBT':
+                tipo_text = ft.Text("Dívida", color=ft.Colors.RED)
+                data_display = t['data_divida']
+            else:
+                tipo_text = ft.Text("Entrada", color=ft.Colors.GREEN)
+                data_display = t['data_entrada']
+            
             rows.append(ft.DataRow(cells=[
-                ft.DataCell(ft.Text("Dívida", color=ft.Colors.RED)),
-                ft.DataCell(ft.Text(d['cpf'])),
-                ft.DataCell(ft.Text(d['categoria'])),
-                ft.DataCell(ft.Text(f"R$ {d['valor']:.2f}")),
-                ft.DataCell(ft.Text(d['data_divida'])),
-            ]))
-        for e in self.controller.get_entradas():
-            rows.append(ft.DataRow(cells=[
-                ft.DataCell(ft.Text("Entrada", color=ft.Colors.GREEN)),
-                ft.DataCell(ft.Text(e['cpf'])),
-                ft.DataCell(ft.Text(e['categoria'])),
-                ft.DataCell(ft.Text(f"R$ {e['valor']:.2f}")),
-                ft.DataCell(ft.Text(e['data'])),
+                ft.DataCell(tipo_text),
+                ft.DataCell(ft.Text(t['cpf'])),
+                ft.DataCell(ft.Text(t['nome'])),
+                ft.DataCell(ft.Text(t['categoria'])),
+                ft.DataCell(ft.Text(f"R$ {t['valor']:.2f}")),
+                ft.DataCell(ft.Text(data_display)),
             ]))
         
         self.report_table.rows = rows
@@ -476,17 +636,13 @@ class GestaoView(ft.Column):
         self.nu_cpf = ft.TextField(label="CPF", width=250, input_filter=ft.InputFilter(allow=True, regex_string=r"[0-9]", replacement_string=""), max_length=11)
         self.nu_nome = ft.TextField(label="Nome", expand=True)
 
+        categorias = self.controller.get_categorias()
+        cat_opts = [ft.dropdown.Option(key=c['id'], text=c['categoria']) for c in categorias]
+
         self.nu_categoria = ft.Dropdown(
             label="Categoria",
             width=250,
-            options=[
-                ft.dropdown.Option("Mensalidade"),
-                ft.dropdown.Option("Cantina"),
-                ft.dropdown.Option("Dízimo"),
-                ft.dropdown.Option("Big Loja"),
-                ft.dropdown.Option("Cota Preparo"),
-                ft.dropdown.Option("Cotas"),
-            ]
+            options=cat_opts
         )
 
         self.nu_valor = ft.TextField(label="Valor R$", width=250, prefix_text="R$ ", keyboard_type=ft.KeyboardType.NUMBER)
@@ -657,19 +813,18 @@ class GestaoView(ft.Column):
         )
         self.et_selected_cpf = data.get('cpf') # Fallback if not changed
 
+        categorias = self.controller.get_categorias()
+        cat_opts = [ft.dropdown.Option(text=c['categoria']) for c in categorias]
+
+        # Category Selector (Dropdown)
         self.et_categoria = ft.Dropdown(
             label="Categoria",
             width=300,
             value=data.get('categoria'),
-            options=[
-                ft.dropdown.Option("Mensalidade"),
-                ft.dropdown.Option("Cantina"),
-                ft.dropdown.Option("Dízimo"),
-                ft.dropdown.Option("Big Loja"),
-                ft.dropdown.Option("Cota Preparo"),
-                ft.dropdown.Option("Cotas"),
-            ]
+            options=cat_opts
         )
+
+        # Value Input (TextField)
         self.et_valor = ft.TextField(label="Valor", width=300, prefix_text="R$ ", value=str(data.get('valor')), keyboard_type=ft.KeyboardType.NUMBER)
         
         # Date Logic
@@ -745,7 +900,7 @@ class GestaoView(ft.Column):
         
         actions = [
             ft.ElevatedButton("Salvar", bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE, on_click=self._save_edit_transaction),
-             ft.ElevatedButton("Cancelar", bgcolor=ft.Colors.ORANGE, color=ft.Colors.WHITE, on_click=lambda e: self._close_dialog())
+            ft.ElevatedButton("Cancelar", bgcolor=ft.Colors.ORANGE, color=ft.Colors.WHITE, on_click=lambda e: self._close_dialog())
         ]
         
         self.dialog = ft.AlertDialog(
@@ -878,6 +1033,49 @@ class GestaoView(ft.Column):
     def _confirm_delete_transaction(self, id):
         self.controller.delete_transaction(id)
         self._close_dialog()
+    
+    def _close_dialog(self):
+        """Fecha o diálogo aberto e atualiza as tabelas."""
+        if hasattr(self, 'dialog') and self.dialog:
+            self.page.close(self.dialog)
+            self.dialog = None
+        self.update_usuarios_table()
+        self.update_dividas_table()
+        self.update_entradas_table()
+        self.update_reports()
+        self.page.update()
+    
+    # ==========================
+    # Filter Methods
+    # ==========================
+    
+    def _on_filter_date_inicial_change(self, e):
+        """Handler para quando a data inicial do filtro é selecionada."""
+        if e.control.value:
+            self.filter_data_inicial.value = e.control.value.strftime("%Y-%m-%d")
+            self.page.update()
+    
+    def _on_filter_date_final_change(self, e):
+        """Handler para quando a data final do filtro é selecionada."""
+        if e.control.value:
+            self.filter_data_final.value = e.control.value.strftime("%Y-%m-%d")
+            self.page.update()
+    
+    def _clear_filters(self):
+        """Limpa todos os filtros e atualiza os relatórios."""
+        if hasattr(self, 'filter_user'):
+            self.filter_user.value = ""
+        if hasattr(self, 'filter_categoria'):
+            self.filter_categoria.value = ""
+        if hasattr(self, 'filter_tipo'):
+            self.filter_tipo.value = ""
+        if hasattr(self, 'filter_data_inicial'):
+            self.filter_data_inicial.value = ""
+        if hasattr(self, 'filter_data_final'):
+            self.filter_data_final.value = ""
+        
+        self.update_reports()
+        self.show_message("Filtros limpos", ft.Colors.BLUE)
 
 
     # ==========================
