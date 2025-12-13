@@ -126,13 +126,13 @@ class LoginView(ft.Column):
             controls=[
                 ft.Container(
                     content=ft.Image(
-                        src="https://via.placeholder.com/200x250",
-                        width=200,
-                        height=250,
+                        src="udv_logo.png",
+                        width=400,
+                        height=200,
                     ),
-                    bgcolor=ft.Colors.BLUE_200,
-                    height=250,
-                    width=200,
+                    bgcolor=ft.Colors.WHITE,
+                    height=200,
+                    width=400,
                 ),
             ],
             alignment=ft.MainAxisAlignment.CENTER,
@@ -145,10 +145,15 @@ class LoginView(ft.Column):
                     controls=[
                         logo,
                         ft.Divider(height=4, color=ft.Colors.AMBER_400, thickness=2),
-                        ft.Text("Login com CPF", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_600),
+                        ft.Column(
+                            [
+                                ft.Text("Login com CPF", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_600, text_align=ft.TextAlign.CENTER),
+                            ],
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        ),
                         ft.Divider(height=4, color=ft.Colors.AMBER_400, thickness=2),
                     ],
-                    alignment=ft.CrossAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
             ],
             alignment=ft.MainAxisAlignment.CENTER

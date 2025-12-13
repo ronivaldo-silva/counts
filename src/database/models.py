@@ -1,4 +1,3 @@
-from sqlalchemy.sql._elements_constructors import true
 from sqlalchemy import Column, Integer, String, Float, Boolean, Date, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -76,7 +75,7 @@ class Registro(Base):
     data_entrada = Column(Date, nullable=True) # "data_entrada" - maybe payment date?
     data_prevista = Column(Date, nullable=True)
     creado_em = Column(DateTime, default=datetime.utcnow)
-    classificacao_id = Column(int, default=3)
+    #classificacao_id = Column(int, default=3)
 
     # Relationships
     usuario = relationship("Usuario", back_populates="registros")
