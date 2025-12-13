@@ -2,7 +2,6 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import datetime
 
 # Default to Counts Postgres DB
 # For Postgres, use: postgresql://user:password@host:port/dbname
@@ -57,7 +56,8 @@ def seed_basic_data():
                 Categoria(categoria="Dízimo", repete=False),
                 Categoria(categoria="Big Loja", repete=False),
                 Categoria(categoria="Cota Preparo", repete=False),
-                Categoria(categoria="Cotas", repete=False),
+                Categoria(categoria="Cotas Diversas", repete=False),
+                Categoria(categoria="Doação", repete=False),
                 Categoria(categoria="Outros", repete=False)
             ]
             db.add_all(cats)
@@ -70,9 +70,9 @@ def seed_basic_data():
         if db.query(Classificacao).count() == 0:
             print("🌱 Seeding Classificações...")
             classifications = [
+                Classificacao(classificacao="Pendente"),
                 Classificacao(classificacao="Vencido"),
                 Classificacao(classificacao="Pago"),
-                Classificacao(classificacao="Pendente"),
                 Classificacao(classificacao="Parcial")
             ]
             db.add_all(classifications)

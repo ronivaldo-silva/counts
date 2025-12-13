@@ -43,4 +43,5 @@ if __name__ == "__main__":
         view=ft.AppView.FLET_APP_WEB,
         port=port,
         host="0.0.0.0"
+
     )
