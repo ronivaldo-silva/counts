@@ -1,15 +1,20 @@
 import flet as ft
+from database.config import SessionLocal
+from repositories.transaction_repository import RegistroRepository
 
 class DashboardController:
     def __init__(self, page: ft.Page):
         self.page = page
         self.view = None
+        self.db = SessionLocal()
+        self.trans_repo = RegistroRepository(self.db)
 
     def set_view(self, view):
         self.view = view
 
     def get_finance_data(self, user_id):
-        # Mock data simulation
+        ### Mock data simulation
+        registros = self.trans_repo.get_by_user(user_id)
         return {
             "total_contribuicoes": 1250.00,
             "dividas": {
@@ -28,6 +33,7 @@ class DashboardController:
                 {"data": "2023-10-20", "categoria": "Cantina", "valor": 45.50, "desc": "Lanches"},
             ]
         }
+    ### Tocar a lógica do código, criar DTO object
 
     def logout(self):
         from views.login_view import LoginView

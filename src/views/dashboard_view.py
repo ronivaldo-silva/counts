@@ -1,7 +1,8 @@
 import flet as ft
+from controllers.dashboard_controller import DashboardController
 
 class DashboardView(ft.Column):
-    def __init__(self, page: ft.Page, controller, user_name: str, user_id: int):
+    def __init__(self, page: ft.Page, controller: DashboardController, user_name: str, user_id: int):
         super().__init__()
         self.page = page
         self.controller = controller
