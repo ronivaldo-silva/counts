@@ -134,12 +134,12 @@ class RegistroRepository:
 
     def get_by_user(self, user_id: int):
         dodos = self.db.query(Registro).filter(Registro.user_id == user_id).all()
-        for i,dado in enumerate(dodos):
-            if i < 4:
-                print(dado)
-            else:
-                break
         return dodos
+
+    # Estudar o mal funcionamento
+    def group_by_category(self, user_id: int):
+        """Returns a list of categories with their total values."""
+        return self.db.query(Registro).filter(Registro.user_id == user_id).group_by(Registro.categoria_rel.categoria).all()
 
     def update(self, trans_id: int, category: str = None, amount: float = None, date_obj: date = None, data_prevista: date = None, new_user_cpf: str = None):
         trans = self.db.query(Registro).filter(Registro.id == trans_id).first()

@@ -85,4 +85,6 @@ class Registro(Base):
     # I'll stick to the requested fields.
 
     def __repr__(self):
-        return f"<Registro(id={self.id}, valor={self.valor})>"
+        return f"<Registro(id={self.id}, valor={self.valor}, categoria={self.categoria_rel.categoria}, type_id={self.type_id})>"
+
+        
