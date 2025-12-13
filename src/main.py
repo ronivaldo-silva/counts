@@ -3,7 +3,7 @@ from views.login_view import LoginView
 from controllers.login_controller import LoginController
 from database.config import engine, Base, seed_basic_data
 
-def main(page: ft.Page):
+def main(page:ft.Page):
     """
     Main entry point for the application.
     Initializes the LoginView and Controller.
@@ -14,7 +14,7 @@ def main(page: ft.Page):
     # Seed basic data (categories, classifications, admin user)
     seed_basic_data()
 
-    page.title = "Sistema de Gestão Financeira"
+    page.title = "Sistema Counts2"
     page.theme_mode = ft.ThemeMode.LIGHT
     
     # Initialize Controller
@@ -43,5 +43,4 @@ if __name__ == "__main__":
         view=ft.AppView.FLET_APP_WEB,
         port=port,
         host="0.0.0.0"
-
     )

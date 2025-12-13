@@ -133,7 +133,13 @@ class RegistroRepository:
         return query.all()
 
     def get_by_user(self, user_id: int):
-        return self.db.query(Registro).filter(Registro.user_id == user_id).all()
+        dodos = self.db.query(Registro).filter(Registro.user_id == user_id).all()
+        for i,dado in enumerate(dodos):
+            if i < 4:
+                print(dado)
+            else:
+                break
+        return dodos
 
     def update(self, trans_id: int, category: str = None, amount: float = None, date_obj: date = None, data_prevista: date = None, new_user_cpf: str = None):
         trans = self.db.query(Registro).filter(Registro.id == trans_id).first()

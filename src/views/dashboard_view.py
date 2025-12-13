@@ -1,3 +1,4 @@
+from flet.core.padding import Padding
 import flet as ft
 from controllers.dashboard_controller import DashboardController
 
@@ -16,12 +17,19 @@ class DashboardView(ft.Column):
         
         self._build_ui()
 
+    # Cabeçalho 
     def _build_ui(self):
         # Header
         header = ft.Container(
             content=ft.Row(
                 [
-                    ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=50, color=ft.Colors.BLUE_600),
+                    #ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=50, color=ft.Colors.BLUE_600),
+                    ft.Container(
+                        content=ft.Image(src="splash_android.png", width=80, height=70, fit=ft.ImageFit.CONTAIN),
+                        padding=2,
+                        width=80,
+                        height=70
+                    ),
                     ft.Column(
                         [
                             ft.Text(f"Olá, {self.user_name}", size=24, weight=ft.FontWeight.BOLD),
@@ -34,7 +42,7 @@ class DashboardView(ft.Column):
                 ],
                 alignment=ft.MainAxisAlignment.START,
             ),
-            padding=20,
+            padding=10,
             bgcolor=ft.Colors.WHITE,
             border_radius=10,
             shadow=ft.BoxShadow(blur_radius=10, color=ft.Colors.with_opacity(0.1, ft.Colors.BLACK))
@@ -45,7 +53,7 @@ class DashboardView(ft.Column):
         
         summary_row = ft.ResponsiveRow(
             [
-                self._build_summary_card("Contribuições", f"R$ {self.data['total_contribuicoes']:.2f}", ft.Icons.SAVINGS, ft.Colors.GREEN_500),
+                #self._build_summary_card("Contribuições", f"R$ {self.data['total_contribuicoes']:.2f}", ft.Icons.SAVINGS, ft.Colors.GREEN_500),
                 self._build_summary_card("Total Pendente", f"R$ {total_divida:.2f}", ft.Icons.MONEY_OFF, ft.Colors.RED_500),
             ],
             alignment=ft.MainAxisAlignment.CENTER,
@@ -143,11 +151,23 @@ class DashboardView(ft.Column):
                 alignment=ft.MainAxisAlignment.CENTER,
             ),
             width=300,
-            height=100,
+            height=70,
             bgcolor=color,
             border_radius=10,
-            padding=15,
+            padding=10,
             shadow=ft.BoxShadow(blur_radius=5, color=color)
+        )
+
+    def _build_defice_card(self, data):
+        return ft.Container(
+            ft.Row(
+                controls=[ft.Text(value=data, size=14, weight=ft.FontWeight.NORMAL) ]
+            ),
+            padding=10,
+            bgcolor=ft.Colors.WHITE,
+            border_radius=10,
+            shadow=ft.BoxShadow(blur_radius=5, color=ft.Colors.with_opacity(0.05, ft.Colors.BLACK)),
+            expand=True
         )
 
     def logout(self, e):

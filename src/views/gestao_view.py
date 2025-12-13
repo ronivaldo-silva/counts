@@ -637,7 +637,7 @@ class GestaoView(ft.Column):
         self.nu_nome = ft.TextField(label="Nome", expand=True)
 
         categorias = self.controller.get_categorias()
-        cat_opts = [ft.dropdown.Option(key=c['id'], text=c['categoria']) for c in categorias]
+        cat_opts = [ft.dropdown.Option(text=c['categoria']) for c in categorias]
 
         self.nu_categoria = ft.Dropdown(
             label="Categoria",
