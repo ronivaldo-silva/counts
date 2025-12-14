@@ -40,7 +40,32 @@ class DashboardController:
                 {"data": "2023-10-20", "categoria": "Cantina", "valor": 45.50, "desc": "Lanches"},
             ]
         }
-    ### Tocar a lógica do código, criar DTO object
+
+    def get_dividas_data(self, user_id):
+        registros = self.trans_repo.get_divi_by_user(user_id)
+        grouped_data = {}
+        dividas_dict = []
+        for registro in registros:
+            categoria = registro.categoria_rel.categoria
+            valor = registro.valor
+            data = registro.data_debito.strftime("%d/%m/%Y")
+
+            dividas_dict.append({
+                "data": data,
+                "categoria": categoria,
+                "valor": valor,
+            })
+
+            if categoria in grouped_data:
+                grouped_data[categoria] += valor # Soma o valor se a categoria já existir
+            else:
+                grouped_data[categoria] = valor # Adiciona o valor se ainda não existir
+
+        return {
+            "total_dividas": sum(registro.valor for registro in registros if registro.type_id == 1),
+            "dividas": grouped_data,
+            "detalhes_dividas": dividas_dict
+        }
 
     def logout(self):
         from views.login_view import LoginView

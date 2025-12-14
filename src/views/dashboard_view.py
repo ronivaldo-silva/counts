@@ -13,7 +13,7 @@ class DashboardView(ft.Column):
         self.scroll = ft.ScrollMode.AUTO
         
         # Fetch Data
-        self.data = self.controller.get_finance_data(self.user_id)
+        self.data = self.controller.get_dividas_data(self.user_id)
         
         self._build_ui()
 
@@ -98,7 +98,6 @@ class DashboardView(ft.Column):
                      cells=[
                          ft.DataCell(ft.Text(item['data'])),
                          ft.DataCell(ft.Text(item['categoria'])),
-                         ft.DataCell(ft.Text(item['desc'])),
                          ft.DataCell(ft.Text(f"R$ {item['valor']:.2f}", color=ft.Colors.RED_400)),
                      ]
                  )
@@ -112,7 +111,6 @@ class DashboardView(ft.Column):
                         columns=[
                             ft.DataColumn(ft.Text("Data")),
                             ft.DataColumn(ft.Text("Categoria")),
-                            ft.DataColumn(ft.Text("Descrição")),
                             ft.DataColumn(ft.Text("Valor"), numeric=True),
                         ],
                         rows=history_rows,

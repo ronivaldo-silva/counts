@@ -93,7 +93,7 @@ class GestaoView(ft.Column):
                 ft.DataColumn(ft.Text("Pendente", weight=ft.FontWeight.BOLD)),
                 ft.DataColumn(ft.Text("Pagos", weight=ft.FontWeight.BOLD)),
                 ft.DataColumn(ft.Text("Maior Pago", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Divida mais antiga", weight=ft.FontWeight.BOLD)),
+                #ft.DataColumn(ft.Text("Divida mais antiga", weight=ft.FontWeight.BOLD)),
                 ft.DataColumn(ft.Text("", weight=ft.FontWeight.BOLD)), # Actions
             ],
             rows=[],
@@ -421,7 +421,7 @@ class GestaoView(ft.Column):
                 ft.DataCell(ft.Text(f"R$ {u['pendente']:.2f}")),
                 ft.DataCell(ft.Text(f"R$ {u['pagos']:.2f}")),
                 ft.DataCell(ft.Text(f"R$ {u['maior_pago']:.2f}")),
-                ft.DataCell(ft.Text(u['is_admin'])),
+                # ft.DataCell(ft.Text(u['is_admin'])),
                 ft.DataCell(ft.Row([
                     ft.IconButton(ft.Icons.EDIT, icon_color=ft.Colors.BLUE, tooltip="Editar Cadastro", on_click=lambda e, u=u: self._show_action_dialog("editar", u)),
                     ft.IconButton(ft.Icons.ATTACH_MONEY, icon_color=ft.Colors.ORANGE, tooltip="Adicionar Dívida", on_click=lambda e, u=u: self._show_action_dialog("divida", u)),

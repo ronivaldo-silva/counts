@@ -135,6 +135,10 @@ class RegistroRepository:
     def get_by_user(self, user_id: int):
         dodos = self.db.query(Registro).filter(Registro.user_id == user_id).all()
         return dodos
+    
+    def get_divi_by_user(self, user_id: int):
+        dodos = self.db.query(Registro).filter(Registro.user_id == user_id, Registro.type_id == 0).all()
+        return dodos
 
     # Estudar o mal funcionamento
     def group_by_category(self, user_id: int):
