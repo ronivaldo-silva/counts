@@ -1,4 +1,3 @@
-from flet.core.padding import Padding
 import flet as ft
 from controllers.dashboard_controller import DashboardController
 
@@ -9,7 +8,8 @@ class DashboardView(ft.Column):
         self.controller = controller
         self.user_name = user_name
         self.user_id = user_id
-        self.expand = True
+        self.page.window_height = 1080
+        self.page.bgcolor = ft.Colors.WHITE
         self.scroll = ft.ScrollMode.AUTO
         
         # Fetch Data
@@ -46,6 +46,13 @@ class DashboardView(ft.Column):
             bgcolor=ft.Colors.WHITE,
             border_radius=10,
             shadow=ft.BoxShadow(blur_radius=10, color=ft.Colors.with_opacity(0.1, ft.Colors.BLACK))
+        )
+
+        qr_code = ft.Container(
+            content=ft.Image(src='qrpix.png', width=300, height=300),
+            width=300, height=300,
+            bgcolor=ft.Colors.WHITE,
+            padding=10
         )
 
         # Summary Cards
@@ -130,7 +137,8 @@ class DashboardView(ft.Column):
             ft.Container(height=20),
             summary_row,
             ft.Container(height=20),
-            ft.Row([debts_card, history_card], alignment=ft.MainAxisAlignment.START, vertical_alignment=ft.CrossAxisAlignment.START, wrap=True, spacing=20)
+            ft.Row([debts_card, history_card], alignment=ft.MainAxisAlignment.START, vertical_alignment=ft.CrossAxisAlignment.START, wrap=True, spacing=20),
+            ft.Row([qr_code], alignment=ft.MainAxisAlignment.CENTER),
         ]
 
     def _build_summary_card(self, title, value, icon, color):
