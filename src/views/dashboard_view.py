@@ -1,4 +1,3 @@
-from flet.core.padding import Padding
 import flet as ft
 from controllers.dashboard_controller import DashboardController
 
@@ -9,7 +8,8 @@ class DashboardView(ft.Column):
         self.controller = controller
         self.user_name = user_name
         self.user_id = user_id
-        self.expand = True
+        # self.page.window_height = 1080 # Removed to avoid overriding global settings if not needed, or keep if strict requirements
+        self.page.bgcolor = ft.Colors.WHITE
         self.scroll = ft.ScrollMode.AUTO
         
         # Fetch Data
@@ -17,157 +17,144 @@ class DashboardView(ft.Column):
         
         self._build_ui()
 
-    # Cabeçalho 
     def _build_ui(self):
-        # Header
+        # --- Header ---
         header = ft.Container(
             content=ft.Row(
                 [
-                    #ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=50, color=ft.Colors.BLUE_600),
                     ft.Container(
-                        content=ft.Image(src="splash_android.png", width=80, height=70, fit=ft.ImageFit.CONTAIN),
+                        content=ft.Image(src="splash_android.png", width=60, height=60, fit=ft.ImageFit.CONTAIN), # Reduced size slightly
                         padding=2,
-                        width=80,
-                        height=70
                     ),
                     ft.Column(
                         [
-                            ft.Text(f"Olá, {self.user_name}", size=24, weight=ft.FontWeight.BOLD),
+                            ft.Text(f"Olá, {self.user_name}", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK),
                             ft.Text("Bem-vindo ao seu painel financeiro", size=14, color=ft.Colors.GREY_600),
                         ],
                         spacing=2
                     ),
                     ft.Container(expand=True),
-                    ft.IconButton(ft.Icons.LOGOUT, tooltip="Sair", on_click=lambda e: self.controller.logout())
+                    ft.IconButton(ft.Icons.LOGOUT, tooltip="Sair", on_click=lambda e: self.controller.logout(), icon_color=ft.Colors.BLUE_900)
                 ],
                 alignment=ft.MainAxisAlignment.START,
             ),
-            padding=10,
+            padding=ft.padding.symmetric(horizontal=20, vertical=10),
             bgcolor=ft.Colors.WHITE,
-            border_radius=10,
-            shadow=ft.BoxShadow(blur_radius=10, color=ft.Colors.with_opacity(0.1, ft.Colors.BLACK))
+            border_radius=15,
+            shadow=ft.BoxShadow(blur_radius=10, color=ft.Colors.with_opacity(0.05, ft.Colors.BLACK)),
+            margin=ft.margin.only(bottom=20)
         )
 
-        # Summary Cards
-        total_divida = sum(self.data['dividas'].values())
-        
-        summary_row = ft.ResponsiveRow(
-            [
-                #self._build_summary_card("Contribuições", f"R$ {self.data['total_contribuicoes']:.2f}", ft.Icons.SAVINGS, ft.Colors.GREEN_500),
-                self._build_summary_card("Total Pendente", f"R$ {total_divida:.2f}", ft.Icons.MONEY_OFF, ft.Colors.RED_500),
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
-            spacing=20,
-        )
-
-        # Debts Categories
-        dividas_controls = []
-        for cat, val in self.data['dividas'].items():
-            if val > 0:
-                dividas_controls.append(
-                    ft.ListTile(
-                        leading=ft.Icon(ft.Icons.LABEL_IMPORTANT_OUTLINE, color=ft.Colors.ORANGE_400),
-                        title=ft.Text(cat, weight=ft.FontWeight.W_500),
-                        trailing=ft.Text(f"R$ {val:.2f}", weight=ft.FontWeight.BOLD, color=ft.Colors.RED_400)
-                    )
-                )
-        
-        if not dividas_controls:
-            dividas_controls.append(ft.Text("Nenhuma pendência!", color=ft.Colors.GREEN))
-
-        debts_card = ft.Container(
-            content=ft.Column(
-                [
-                    ft.Text("Pendências por Categoria", size=18, weight=ft.FontWeight.BOLD),
-                    ft.Divider(),
-                    ft.Column(dividas_controls)
-                ]
-            ),
-            padding=20,
-            bgcolor=ft.Colors.WHITE,
-            border_radius=10,
-            shadow=ft.BoxShadow(blur_radius=5, color=ft.Colors.with_opacity(0.05, ft.Colors.BLACK)),
-            width=400
-        )
-
-        # Recent History (Oldest Debts/Details)
-        history_rows = []
-        for item in self.data['detalhes_dividas']:
-             history_rows.append(
-                 ft.DataRow(
-                     cells=[
-                         ft.DataCell(ft.Text(item['data'])),
-                         ft.DataCell(ft.Text(item['categoria'])),
-                         ft.DataCell(ft.Text(f"R$ {item['valor']:.2f}", color=ft.Colors.RED_400)),
-                     ]
-                 )
-             )
-
-        history_card = ft.Container(
-            content=ft.Column(
-                [
-                    ft.Text("Detalhamento de Pendências", size=18, weight=ft.FontWeight.BOLD),
-                    ft.DataTable(
-                        columns=[
-                            ft.DataColumn(ft.Text("Data")),
-                            ft.DataColumn(ft.Text("Categoria")),
-                            ft.DataColumn(ft.Text("Valor"), numeric=True),
-                        ],
-                        rows=history_rows,
-                    )
-                ],
-                scroll=ft.ScrollMode.AUTO
-            ),
-            padding=20,
-            bgcolor=ft.Colors.WHITE,
-            border_radius=10,
-            shadow=ft.BoxShadow(blur_radius=5, color=ft.Colors.with_opacity(0.05, ft.Colors.BLACK)),
-            expand=True
-        )
-
-        self.controls = [
-            header,
-            ft.Container(height=20),
-            summary_row,
-            ft.Container(height=20),
-            ft.Row([debts_card, history_card], alignment=ft.MainAxisAlignment.START, vertical_alignment=ft.CrossAxisAlignment.START, wrap=True, spacing=20)
-        ]
-
-    def _build_summary_card(self, title, value, icon, color):
-        return ft.Container(
+        # --- Total Pendente Card ---
+        total_pendente = self.data["total_dividas"]
+        total_card = ft.Container(
             content=ft.Row(
                 [
-                    ft.Icon(icon, size=40, color=ft.Colors.WHITE),
+                    ft.Icon(ft.Icons.MONEY_OFF, color=ft.Colors.WHITE, size=40),
                     ft.Column(
                         [
-                            ft.Text(title, color=ft.Colors.WHITE70, size=14),
-                            ft.Text(value, color=ft.Colors.WHITE, size=22, weight=ft.FontWeight.BOLD),
+                            ft.Text("Total Pendente", color=ft.Colors.WHITE70, size=14),
+                            ft.Text(f"R$ {total_pendente:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."), color=ft.Colors.WHITE, size=24, weight=ft.FontWeight.BOLD),
                         ],
-                        spacing=2
-                    ),
+                        spacing=0
+                    )
                 ],
-                alignment=ft.MainAxisAlignment.CENTER,
+                alignment=ft.MainAxisAlignment.START,
             ),
-            width=300,
-            height=70,
-            bgcolor=color,
-            border_radius=10,
-            padding=10,
-            shadow=ft.BoxShadow(blur_radius=5, color=color)
+            bgcolor=ft.Colors.RED_400, # Matches the red/salmon color
+            border_radius=15,
+            padding=20,
+            width=350, # Fixed width for the card style
+            shadow=ft.BoxShadow(blur_radius=10, color=ft.Colors.with_opacity(0.2, ft.Colors.RED_400))
         )
 
-    def _build_defice_card(self, data):
-        return ft.Container(
-            ft.Row(
-                controls=[ft.Text(value=data, size=14, weight=ft.FontWeight.NORMAL) ]
-            ),
-            padding=10,
-            bgcolor=ft.Colors.WHITE,
-            border_radius=10,
-            shadow=ft.BoxShadow(blur_radius=5, color=ft.Colors.with_opacity(0.05, ft.Colors.BLACK)),
-            expand=True
+        # --- Debts List ---
+        debt_items = []
+        for item in self.data["dividas_agrupadas"]:
+            debt_items.append(
+                ft.Container(
+                    content=ft.Row(
+                        [
+                            ft.Row(
+                                [
+                                    ft.Icon(ft.Icons.MONEY_OFF_CSRED_OUTLINED, color=ft.Colors.RED_400, size=30), # Icon style
+                                    ft.Column(
+                                        [
+                                            ft.Text(item["categoria"], size=14, color=ft.Colors.BLACK87),
+                                            ft.Text(f"R$ {item['total']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."), size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK),
+                                        ],
+                                        spacing=0
+                                    ),
+                                ]
+                            ),
+                            ft.Column(
+                                [
+                                    ft.Text("Atualizado", size=12, color=ft.Colors.GREY_600, text_align=ft.TextAlign.RIGHT),
+                                    ft.Text(item["data_atualizacao"], size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_500, text_align=ft.TextAlign.RIGHT),
+                                ],
+                                spacing=0,
+                                alignment=ft.MainAxisAlignment.CENTER,
+                                horizontal_alignment=ft.CrossAxisAlignment.END
+                            )
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                    ),
+                    padding=15,
+                    border=ft.border.all(1, ft.Colors.RED_200),
+                    border_radius=15,
+                    bgcolor=ft.Colors.WHITE,
+                    margin=ft.margin.only(bottom=10)
+                )
+            )
+
+        if not debt_items:
+             debt_items.append(ft.Text("Nenhuma pendência encontrada!", color=ft.Colors.GREEN))
+
+        debts_column = ft.Column(
+            controls=debt_items,
+            spacing=10
         )
 
-    def logout(self, e):
-        # Deprecated, using controller
-        pass
+        # --- QR Code Section ---
+        pix_key = "tes.mestrevicentemarques@udv.org.br"
+        qr_section = ft.Column(
+            [
+                ft.Image(src="qrpix.png", width=250, height=250, fit=ft.ImageFit.CONTAIN),
+                ft.Text(pix_key, size=16, color=ft.Colors.BLACK87, text_align=ft.TextAlign.CENTER),
+                ft.IconButton(
+                    icon=ft.Icons.COPY, 
+                    icon_color=ft.Colors.BLUE_500, 
+                    tooltip="Copiar chave Pix",
+                    on_click=lambda e: (self.page.set_clipboard(pix_key), self.page.open(ft.SnackBar(ft.Text("Chave Pix copiada!"))))
+                )
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.START
+        )
+
+        # --- Main Layout (Responsive) ---
+        # Left side: Total Card + Debts List
+        left_content = ft.Column(
+            [
+                total_card,
+                ft.Container(height=20),
+                debts_column
+            ],
+            scroll=ft.ScrollMode.ADAPTIVE
+        )
+
+        # Responsive Row
+        # Col parameter: dictionaries defining column span for different breakpoints (xs, sm, md, lg, xl, xxl)
+        # 12 columns total
+        self.controls = [
+            header,
+            ft.ResponsiveRow(
+                [
+                    ft.Column(col={"sm": 12, "md": 7}, controls=[left_content]),
+                    ft.Column(col={"sm": 12, "md": 5}, controls=[qr_section], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                ],
+                vertical_alignment=ft.CrossAxisAlignment.START,
+                spacing=30
+            )
+        ]
+
