@@ -3,7 +3,7 @@ from controllers.dashboard_controller import DashboardController
 
 class DashboardView(ft.Column):
     def __init__(self, page: ft.Page, controller: DashboardController, user_name: str, user_id: int):
-        super().__init__()
+        super().__init__(expand=True)
         self.page = page
         self.controller = controller
         self.user_name = user_name
