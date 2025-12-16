@@ -50,7 +50,7 @@ class DashboardController:
 
         for registro in registros:
             categoria = registro.categoria_rel.categoria
-            valor = registro.valor
+            valor = registro.saldo # Use remaining balance (saldo) instead of original value
             data = registro.creado_em # Changed from data_debito to creado_em
 
             if categoria not in aggregated_data:

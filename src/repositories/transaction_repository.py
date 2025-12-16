@@ -15,10 +15,6 @@ class RegistroRepository:
         # Map Category string to ID
         cat_obj = self.db.query(Categoria).filter(Categoria.categoria == category).first()
         if not cat_obj:
-            # Create category if not exists? Or default?
-            # User instructions implied fixed categories, but let's be safe.
-            # For now, let's create it to prevent crashes, or fail?
-            # Let's create it.
             cat_obj = Categoria(categoria=category, repete=False)
             self.db.add(cat_obj)
             self.db.commit()
@@ -26,19 +22,24 @@ class RegistroRepository:
         
         category_id = cat_obj.id
 
-        # Mapping Logic:
-        # If DEBT (0): date_obj -> data_debito, data_prevista -> from arg or None
-        # If PAYMENT (1): date_obj -> data_entrada
-        
         d_debito = None
         d_entrada = None
         d_prevista = None
         
+        # Default status for new record
+        # If DEBT: Pending(1), Saldo = amount
+        # If PAYMENT: Paid(3) (Payments are always 'Paid' themselves?), Saldo = 0
+        
+        classif_id = 1 # Pendente
+        saldo_val = 0.0
+
         if type_id == 0:
             d_debito = date_obj
             d_prevista = data_prevista
+            saldo_val = amount # Debt starts with full balance
         else:
             d_entrada = date_obj
+            classif_id = 3 # Payments are "Paid" by definition or just neutral. Let's say 3.
             
         print("DEBUG: Creating Registro object...")
         db_trans = Registro(
@@ -48,7 +49,9 @@ class RegistroRepository:
             valor=amount,
             data_debito=d_debito,
             data_entrada=d_entrada,
-            data_prevista=d_prevista
+            data_prevista=d_prevista,
+            classificacao_id=classif_id,
+            saldo=saldo_val
         )
         print("DEBUG: Registro created. Adding to DB...")
         self.db.add(db_trans)
@@ -60,6 +63,10 @@ class RegistroRepository:
             print(f"DEBUG: Commit failed: {e}")
             raise e
         self.db.refresh(db_trans)
+        
+        # Trigger Recalculation for consistency
+        self._recalculate_balances(user_id, category_id)
+        
         return db_trans
 
     def get_by_type(self, type: str):
@@ -72,16 +79,6 @@ class RegistroRepository:
     def get_with_filters(self, user_cpf=None, data_inicial=None, data_final=None, categoria=None, tipo=None):
         """
         Retorna transações filtradas por múltiplos critérios.
-        
-        Args:
-            user_cpf (str, optional): CPF do usuário
-            data_inicial (date, optional): Data inicial do intervalo
-            data_final (date, optional): Data final do intervalo
-            categoria (str, optional): Nome da categoria
-            tipo (str, optional): Tipo da transação ('DEBT', 'PAYMENT', ou None para todos)
-        
-        Returns:
-            list: Lista de objetos Registro filtrados
         """
         query = self.db.query(Registro).join(Usuario)
         
@@ -101,9 +98,7 @@ class RegistroRepository:
                 query = query.filter(Registro.category_id == cat_obj.id)
         
         # Filtro por intervalo de datas
-        # Para DEBT, verificamos data_debito; para PAYMENT, verificamos data_entrada
         if data_inicial or data_final:
-            # Se tipo específico foi selecionado, filtramos o campo de data correspondente
             if tipo == 'DEBT':
                 if data_inicial:
                     query = query.filter(Registro.data_debito >= data_inicial)
@@ -115,7 +110,6 @@ class RegistroRepository:
                 if data_final:
                     query = query.filter(Registro.data_entrada <= data_final)
             else:
-                # Se tipo não foi especificado, filtramos ambos os tipos de data
                 if data_inicial and data_final:
                     query = query.filter(
                         ((Registro.data_debito >= data_inicial) & (Registro.data_debito <= data_final)) |
@@ -137,10 +131,16 @@ class RegistroRepository:
         return dodos
     
     def get_divi_by_user(self, user_id: int):
-        dodos = self.db.query(Registro).filter(Registro.user_id == user_id, Registro.type_id == 0).all()
-        return dodos
+        # Return only debts that are NOT Paid (3)
+        # Assuming Pending=1, Vencido=2, Pago=3, Parcial=4
+        # We want everything except Pago (3).
+        # And specifically type_id=0 (DEBT)
+        return self.db.query(Registro).filter(
+            Registro.user_id == user_id, 
+            Registro.type_id == 0,
+            Registro.classificacao_id != 3
+        ).all()
 
-    # Estudar o mal funcionamento
     def group_by_category(self, user_id: int):
         """Returns a list of categories with their total values."""
         return self.db.query(Registro).filter(Registro.user_id == user_id).group_by(Registro.categoria_rel.categoria).all()
@@ -148,6 +148,8 @@ class RegistroRepository:
     def update(self, trans_id: int, category: str = None, amount: float = None, date_obj: date = None, data_prevista: date = None, new_user_cpf: str = None):
         trans = self.db.query(Registro).filter(Registro.id == trans_id).first()
         if trans:
+            old_category_id = trans.category_id
+            
             if category: 
                 # resolving category
                 cat_obj = self.db.query(Categoria).filter(Categoria.categoria == category).first()
@@ -163,22 +165,83 @@ class RegistroRepository:
                 if date_obj: trans.data_entrada = date_obj
             
             if new_user_cpf:
-                # Resolve new user ID
                 user = self.db.query(Usuario).filter(Usuario.cpf == new_user_cpf).first()
                 if user:
                     trans.user_id = user.id
             
             self.db.commit()
             self.db.refresh(trans)
+            
+            # Recalculate balances for old category (if changed) and new category
+            self._recalculate_balances(trans.user_id, old_category_id)
+            if old_category_id != trans.category_id:
+                self._recalculate_balances(trans.user_id, trans.category_id)
+            
         return trans
 
     def delete(self, trans_id: int):
         trans = self.db.query(Registro).filter(Registro.id == trans_id).first()
         if trans:
+            user_id = trans.user_id
+            cat_id = trans.category_id
             self.db.delete(trans)
             self.db.commit()
+            
+            # Recalculate after deletion
+            self._recalculate_balances(user_id, cat_id)
             return True
         return False
+
+    def _recalculate_balances(self, user_id: int, category_id: int):
+        """
+        Recalculates the balance of all debts for a specific user and category based on payments.
+        Logic:
+        1. Reset all Debts in this category for this user to 'Pendente' (1) and saldo = valor.
+        2. Fetch all Payments in this category for this user, ordered by date.
+        3. Apply payments strictly FIFO to debts ordered by date.
+        """
+        # 1. Reset Debts
+        debts = self.db.query(Registro).filter(
+            Registro.user_id == user_id,
+            Registro.category_id == category_id,
+            Registro.type_id == 0 # DEBT
+        ).order_by(Registro.data_debito, Registro.creado_em).all()
+
+        for debt in debts:
+            debt.saldo = debt.valor
+            debt.classificacao_id = 1 # Pendente
+        
+        # 2. Fetch Payments
+        payments = self.db.query(Registro).filter(
+            Registro.user_id == user_id,
+            Registro.category_id == category_id,
+            Registro.type_id == 1 # PAYMENT
+        ).order_by(Registro.data_entrada, Registro.creado_em).all()
+
+        # 3. Apply Payments (FIFO)
+        debt_idx = 0
+        total_payment_pool = sum(p.valor for p in payments)
+        
+        # Optimization: Apply total pool to debts in order
+        remaining_pool = total_payment_pool
+        
+        # Iterate over debts and pay them off with the pool
+        for debt in debts:
+            if remaining_pool <= 0:
+                break
+            
+            if remaining_pool >= debt.saldo:
+                # Fully pay this debt
+                remaining_pool -= debt.saldo
+                debt.saldo = 0.0
+                debt.classificacao_id = 3 # Pago
+            else:
+                # Partially pay
+                debt.saldo -= remaining_pool
+                remaining_pool = 0.0
+                debt.classificacao_id = 4 # Parcial
+        
+        self.db.commit()
 
     def get_summary_metrics(self, user_cpf=None, data_inicial=None, data_final=None, categoria=None, tipo=None):
         """

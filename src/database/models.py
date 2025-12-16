@@ -75,14 +75,17 @@ class Registro(Base):
     data_entrada = Column(Date, nullable=True) # "data_entrada" - maybe payment date?
     data_prevista = Column(Date, nullable=True)
     creado_em = Column(DateTime, default=datetime.utcnow)
-    #classificacao_id = Column(int, default=3)
+    
+    # New Columns for Debt Abatement
+    # Default classificacao_id=1 (Pendente)
+    classificacao_id = Column(Integer, ForeignKey("classificacoes.id"), default=1)
+    saldo = Column(Float, default=0.0)
 
     # Relationships
     usuario = relationship("Usuario", back_populates="registros")
     categoria_rel = relationship("Categoria", back_populates="registros")
-    
-    # Since I'm not adding foreign key for classificacao, no relationship here yet unless I deviate.
-    # I'll stick to the requested fields.
+    # classification relationship
+    classificacao_rel = relationship("Classificacao")
 
     def __repr__(self):
         return f"<Registro(id={self.id}, valor={self.valor}, categoria={self.categoria_rel.categoria}, type_id={self.type_id})>"
