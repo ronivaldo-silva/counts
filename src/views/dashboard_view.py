@@ -19,24 +19,38 @@ class DashboardView(ft.Column):
 
     def _build_ui(self):
         # --- Header ---
+        bt_logout = ft.IconButton(
+            icon=ft.Icons.LOGOUT,
+            tooltip="Sair",
+            on_click=lambda e: self.controller.logout(),
+            icon_color=ft.Colors.RED_300,
+            bgcolor=ft.Colors.GREY_100,
+            hover_color=ft.Colors.GREY_300,
+        )
+
+        # --- Header ---
         header = ft.Container(
-            content=ft.Row(
-                [
-                    ft.Container(
-                        content=ft.Image(src="splash_android.png", width=60, height=60, fit=ft.ImageFit.CONTAIN), # Reduced size slightly
-                        padding=2,
-                    ),
-                    ft.Column(
-                        [
-                            ft.Text(f"Olá, {self.user_name}", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK),
-                            ft.Text("Bem-vindo ao seu painel financeiro", size=14, color=ft.Colors.GREY_600),
-                        ],
-                        spacing=2
-                    ),
-                    ft.Container(expand=True),
-                    ft.IconButton(ft.Icons.LOGOUT, tooltip="Sair", on_click=lambda e: self.controller.logout(), icon_color=ft.Colors.BLUE_900)
-                ],
-                alignment=ft.MainAxisAlignment.START,
+            content=ft.Column(
+                    controls=[
+                        ft.Container(
+                            content=ft.Image(src="splash_android.png", width=60, height=60, fit=ft.ImageFit.CONTAIN), # Reduced size slightly
+                            padding=2
+                        ),
+                        ft.Row(
+                            [
+                                bt_logout,
+                                ft.Column(
+                                    [
+                                        ft.Text(f"Olá, {self.user_name}", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK),
+                                        ft.Text("Bem-vindo ao seu painel financeiro", size=14, color=ft.Colors.GREY_600),
+                                    ],
+                                    spacing=2,
+                                    alignment=ft.MainAxisAlignment.START,
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.START,
+                        ),
+                    ],
             ),
             padding=ft.padding.symmetric(horizontal=20, vertical=10),
             bgcolor=ft.Colors.WHITE,

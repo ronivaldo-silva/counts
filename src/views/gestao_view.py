@@ -1088,10 +1088,10 @@ class GestaoView(ft.Column):
         header = ft.Container(
             content=ft.Row(
                 [
+                    ft.IconButton(ft.Icons.LOGOUT, tooltip="Sair", on_click=lambda e: self.controller.logout()),
                     ft.Icon(ft.Icons.ADMIN_PANEL_SETTINGS, size=40, color=ft.Colors.BLUE_600),
                     ft.Text("Painel de Gestão", size=24, weight=ft.FontWeight.BOLD),
                     ft.Container(expand=True),
-                    ft.IconButton(ft.Icons.LOGOUT, tooltip="Sair", on_click=lambda e: self.controller.logout())
                 ],
                 alignment=ft.MainAxisAlignment.START,
             ),
