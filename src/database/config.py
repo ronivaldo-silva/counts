@@ -5,11 +5,9 @@ from sqlalchemy.orm import sessionmaker
 
 # Default to Counts Postgres DB
 # For Postgres, use: postgresql://user:password@host:port/dbname
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://userapp:Li0nt0g3ro!@localhost:5432/Counts")
+DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://userapp:Li0nt0g3ro!@localhost:3306/Counts")
 
-# Fix for Render/Heroku typically using 'postgres://' which SQLAlchemy doesn't like anymore
-if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 
 engine = create_engine(
     DATABASE_URL, 
