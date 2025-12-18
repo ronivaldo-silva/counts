@@ -58,6 +58,8 @@ def seed_basic_data():
                 Categoria(categoria="Cota Preparo", repete=False),
                 Categoria(categoria="Cotas Diversas", repete=False),
                 Categoria(categoria="Doação", repete=False),
+                Categoria(categoria="Prosperar", repete=False),
+                Categoria(categoria="Novo Encanto", repete=False),
                 Categoria(categoria="Outros", repete=False)
             ]
             db.add_all(cats)
