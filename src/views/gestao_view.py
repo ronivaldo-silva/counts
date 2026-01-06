@@ -1018,7 +1018,7 @@ class GestaoView(ft.Column):
     def _build_edit_user_dialog_content(self, user_data):
         """Builds content for Editing a User."""
         self.eu_original_data = user_data
-        self.eu_cpf = ft.TextField(label="CPF", value=user_data['cpf'], read_only=True, bgcolor=ft.Colors.GREY_100, col={"xs": 12, "sm": 12, "md": 12, "lg": 6})
+        self.eu_cpf = ft.TextField(label="CPF", value=user_data['cpf'], read_only=False, bgcolor=ft.Colors.GREY_100, col={"xs": 12, "sm": 12, "md": 12, "lg": 6})
         self.eu_nome = ft.TextField(label="Nome", value=user_data['nome'], col={"xs": 12, "sm": 12, "md": 12, "lg": 6})
         self.eu_senha = ft.TextField(label="Senha", password=True, can_reveal_password=True, col={"xs": 12})
 
