@@ -314,7 +314,13 @@ class GestaoController:
             categoria=categoria,
             tipo=tipo
         )
-        return [self._trans_to_dict(t) for t in transactions]
+        # Convert to dicts
+        results = [self._trans_to_dict(t) for t in transactions]
+        
+        # Sort by 'data' descending (YYYY-MM-DD string sort works)
+        results.sort(key=lambda x: x['data'], reverse=True)
+        
+        return results
 
     # ==========================
     # Authentication

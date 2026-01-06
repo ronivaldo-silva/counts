@@ -1,5 +1,5 @@
 import flet as ft
-from datetime import datetime
+from datetime import datetime, timedelta
 from controllers.gestao_controller import GestaoController
 
 class GestaoView(ft.Column):
@@ -85,21 +85,8 @@ class GestaoView(ft.Column):
             alignment=ft.MainAxisAlignment.START
         )
 
-        # Table
-        self.users_table = ft.DataTable(
-            columns=[
-                ft.DataColumn(ft.Text("CPF", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Nome", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Pendente", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Pagos", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Maior Pago", weight=ft.FontWeight.BOLD)),
-                #ft.DataColumn(ft.Text("Divida mais antiga", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("", weight=ft.FontWeight.BOLD)), # Actions
-            ],
-            rows=[],
-            heading_row_color=ft.Colors.WHITE,
-            data_row_color=ft.Colors.WHITE,
-        )
+        # List Container
+        self.users_column = ft.Column(spacing=10, scroll=ft.ScrollMode.ADAPTIVE)
         
         # Initial Load
         self.update_usuarios_table()
@@ -108,10 +95,10 @@ class GestaoView(ft.Column):
             content=ft.Column([
                 bt_new_user,
                 ft.Container(height=20),
-                ft.Column([self.users_table], scroll=ft.ScrollMode.AUTO, expand=True)
-            ]),
-            padding=20
-
+                self.users_column
+            ], expand=True), # Expand outer column so scrolling works if needed
+            padding=20,
+            expand=True
         )
 
     def _build_dividas_tab(self):
@@ -144,20 +131,7 @@ class GestaoView(ft.Column):
             alignment=ft.MainAxisAlignment.START
         )
 
-        self.dividas_table = ft.DataTable(
-            columns=[
-                ft.DataColumn(ft.Text("CPF", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Nome", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Categoria", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Valor", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Data Dívida", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Data Prevista", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("", weight=ft.FontWeight.BOLD)),
-            ],
-            rows=[],
-            heading_row_color=ft.Colors.WHITE,
-            data_row_color=ft.Colors.WHITE,
-        )
+        self.dividas_column = ft.Column(spacing=10, scroll=ft.ScrollMode.ADAPTIVE)
         
         self.update_dividas_table()
 
@@ -165,9 +139,10 @@ class GestaoView(ft.Column):
             content=ft.Column([
                 bt_new_divida,
                 ft.Container(height=20),
-                ft.Column([self.dividas_table], scroll=ft.ScrollMode.AUTO, expand=True)
-            ]),
-            padding=20
+                self.dividas_column
+            ], expand=True),
+            padding=20,
+            expand=True
         )
 
     def _build_entradas_tab(self):
@@ -199,19 +174,7 @@ class GestaoView(ft.Column):
             alignment=ft.MainAxisAlignment.START
         )
 
-        self.entradas_table = ft.DataTable(
-            columns=[
-                ft.DataColumn(ft.Text("CPF", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Nome", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Categoria", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Valor", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("Data", weight=ft.FontWeight.BOLD)),
-                ft.DataColumn(ft.Text("", weight=ft.FontWeight.BOLD)),
-            ],
-            rows=[],
-            heading_row_color=ft.Colors.WHITE,
-            data_row_color=ft.Colors.WHITE,
-        )
+        self.entradas_column = ft.Column(spacing=10, scroll=ft.ScrollMode.ADAPTIVE)
         
         self.update_entradas_table()
 
@@ -219,14 +182,15 @@ class GestaoView(ft.Column):
             content=ft.Column([
                 bt_new_entrada,
                 ft.Container(height=20),
-                ft.Column([self.entradas_table], scroll=ft.ScrollMode.AUTO, expand=True)
-            ]),
-            padding=20
+                self.entradas_column
+            ], expand=True),
+            padding=20,
+            expand=True
         )
 
-    def _build_relatorios_tab(self):
+    def _deprecated_build_relatorios_tab(self):
         """Builds the Reports Tab with Filters."""
-        # Filtros
+        # Filtros (Refactoring)
         users = self.controller.get_usuarios()
         user_opts = [ft.dropdown.Option(key="", text="Todos")] + [
             ft.dropdown.Option(key=u['cpf'], text=f"{u['nome']} ({u['cpf']})") for u in users
@@ -370,6 +334,224 @@ class GestaoView(ft.Column):
             padding=20
         )
         
+    def _build_relatorios_tab(self):
+        """Builds the Reports Tab with Filters in a Dialog and Responsive List."""
+        
+        # Initialize Filter Controls (kept in memory, visible in dialog)
+        users = self.controller.get_usuarios()
+        user_opts = [ft.dropdown.Option(key="", text="Todos")] + [
+            ft.dropdown.Option(key=u['cpf'], text=f"{u['nome']} ({u['cpf']})") for u in users
+        ]
+        
+        self.filter_user = ft.Dropdown(
+            label="Usuário",
+            options=user_opts,
+            value="",
+            enable_filter=True,
+            leading_icon=ft.Icons.PERSON,
+            col={"xs": 12}
+        )
+        
+        categorias = self.controller.get_categorias()
+        cat_opts = [ft.dropdown.Option(key="", text="Todas")] + [
+            ft.dropdown.Option(key=c['categoria'], text=c['categoria']) for c in categorias
+        ]
+        
+        self.filter_categoria = ft.Dropdown(
+            label="Categoria",
+            options=cat_opts,
+            value="",
+            col={"xs": 12, "md": 6}
+        )
+        
+        self.filter_tipo = ft.Dropdown(
+            label="Tipo",
+            options=[
+                ft.dropdown.Option(key="", text="Todos"),
+                ft.dropdown.Option(key="DEBT", text="Dívidas"),
+                ft.dropdown.Option(key="PAYMENT", text="Entradas"),
+            ],
+            value="",
+            col={"xs": 12, "md": 6}
+        )
+        
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        thirty_days_ago_str = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+
+        # Date Pickers
+        self.filter_data_inicial = ft.TextField(
+            label="Data Inicial",
+            read_only=True,
+            value=thirty_days_ago_str,
+            hint_text="Selecione",
+            suffix=ft.IconButton(
+                icon=ft.Icons.CALENDAR_MONTH,
+                on_click=lambda e: self.page.open(self.filter_date_picker_inicial)
+            ),
+             col={"xs": 12, "md": 6}
+        )
+        
+        self.filter_data_final = ft.TextField(
+            label="Data Final",
+            read_only=True,
+            value=today_str,
+            hint_text="Selecione",
+            suffix=ft.IconButton(
+                icon=ft.Icons.CALENDAR_MONTH,
+                on_click=lambda e: self.page.open(self.filter_date_picker_final)
+            ),
+             col={"xs": 12, "md": 6}
+        )
+        
+        if not hasattr(self, 'filter_date_picker_inicial'):
+            self.filter_date_picker_inicial = ft.DatePicker(
+                on_change=lambda e: self._on_filter_date_inicial_change(e),
+                first_date=datetime(2020, 1, 1),
+                last_date=datetime(2030, 12, 31)
+            )
+            self.page.overlay.append(self.filter_date_picker_inicial)
+        
+        if not hasattr(self, 'filter_date_picker_final'):
+            self.filter_date_picker_final = ft.DatePicker(
+                on_change=lambda e: self._on_filter_date_final_change(e),
+                first_date=datetime(2020, 1, 1),
+                last_date=datetime(2030, 12, 31)
+            )
+            self.page.overlay.append(self.filter_date_picker_final)
+    
+        # Metrics Container
+        self.metrics_container = ft.Row(wrap=True, spacing=20)
+        
+        # Report List (Replaces DataTable)
+        self.report_list = ft.Column(scroll=ft.ScrollMode.AUTO, expand=True)
+        
+        # Initial Load
+        self.update_reports()
+
+        # Build UI
+        return ft.Container(
+            content=ft.Column([
+                ft.Row([
+                    ft.Text("Métricas", size=20, weight=ft.FontWeight.BOLD),
+                    ft.Container(expand=True),
+                    ft.ElevatedButton(
+                        "Filtros",
+                        icon=ft.Icons.FILTER_LIST,
+                        bgcolor=ft.Colors.BLUE,
+                        color=ft.Colors.WHITE,
+                        on_click=lambda e: self._show_filter_dialog()
+                    )
+                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                self.metrics_container,
+                ft.Divider(),
+                ft.Text("Histórico Geral", size=20, weight=ft.FontWeight.BOLD),
+                ft.Container(
+                    content=self.report_list,
+                    expand=True,
+                    padding=ft.padding.only(bottom=20)
+                ) 
+            ], expand=True),
+            padding=20,
+            expand=True
+        )
+
+    def _show_filter_dialog(self):
+        """Shows the filters in a responsive Dialog."""
+        
+        dialog_width = 500
+        if self.page:
+             dialog_width = min(self.page.width - 20, 500)
+
+        content = ft.Container(
+            content=ft.Column([
+                ft.Text("Filtrar Relatórios", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE),
+                ft.Divider(),
+                ft.ResponsiveRow([self.filter_user]),
+                ft.ResponsiveRow([self.filter_categoria, self.filter_tipo], run_spacing=10),
+                ft.ResponsiveRow([self.filter_data_inicial, self.filter_data_final], run_spacing=10),
+            ], tight=True),
+            width=dialog_width,
+            padding=10
+        )
+
+        self.filter_dialog = ft.AlertDialog(
+            content=content,
+            actions=[
+                ft.ElevatedButton(
+                    "Aplicar",
+                    icon=ft.Icons.CHECK,
+                    bgcolor=ft.Colors.GREEN,
+                    color=ft.Colors.WHITE,
+                    on_click=lambda e: self._apply_filters_and_close()
+                ),
+                ft.OutlinedButton(
+                    "Limpar",
+                    icon=ft.Icons.CLEAR,
+                    on_click=lambda e: self._clear_filters()
+                ),
+                ft.TextButton("Cancelar", on_click=lambda e: self.page.close(self.filter_dialog))
+            ],
+            modal=True,
+            actions_alignment=ft.MainAxisAlignment.END
+        )
+        self.page.open(self.filter_dialog)
+
+    def _apply_filters_and_close(self):
+        self.update_reports()
+        if hasattr(self, 'filter_dialog'):
+            self.page.close(self.filter_dialog)
+
+    def _build_report_item(self, t):
+        """Helper to build a responsive report item row."""
+        is_debt = t['type'] == 'DEBT'
+        icon = ft.Icons.MONEY_OFF if is_debt else ft.Icons.ATTACH_MONEY
+        color = ft.Colors.RED if is_debt else ft.Colors.GREEN
+        bg_color = ft.Colors.RED_50 if is_debt else ft.Colors.GREEN_50
+        
+        data_display = t['data_divida'] if is_debt else t['data_entrada']
+        valor_display = f"R$ {t['valor']:.2f}"
+        
+        return ft.Container(
+            content=ft.ResponsiveRow([
+                # Icon & Type
+                ft.Column([
+                    ft.Icon(icon, color=color),
+                ], col={"xs": 2, "sm": 1}, alignment=ft.MainAxisAlignment.CENTER),
+                
+                # Name & CPF
+                ft.Column([
+                    ft.Text(t['nome'], weight=ft.FontWeight.BOLD, size=14, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                    ft.Text(t['cpf'], size=12, color=ft.Colors.GREY_600),
+                ], col={"xs": 10, "sm": 4}, spacing=2, alignment=ft.MainAxisAlignment.CENTER),
+                
+                # Category
+                ft.Column([
+                    ft.Container(
+                        content=ft.Text(t['categoria'], size=12, color=ft.Colors.BLACK87),
+                        bgcolor=ft.Colors.WHITE,
+                        padding=5,
+                        border_radius=5,
+                        border=ft.border.all(1, ft.Colors.GREY_300)
+                    )
+                ], col={"xs": 6, "sm": 3}, alignment=ft.MainAxisAlignment.CENTER),
+                
+                # Value
+                ft.Column([
+                    ft.Text(valor_display, weight=ft.FontWeight.BOLD, color=color, size=14),
+                ], col={"xs": 6, "sm": 2}, alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.END),
+                
+                # Date
+                ft.Column([
+                    ft.Text(data_display, size=12, color=ft.Colors.GREY_600),
+                ], col={"xs": 12, "sm": 2}, alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.END),
+            ], vertical_alignment=ft.CrossAxisAlignment.CENTER),
+            padding=10,
+            bgcolor=bg_color,
+            border_radius=8,
+            border=ft.border.only(left=ft.BorderSide(5, color)),
+            margin=ft.margin.only(bottom=10)
+        )
+
     def _build_metric_card(self, title, value, color):
         """Helper to create a metric card."""
         return ft.Container(
@@ -382,6 +564,99 @@ class GestaoView(ft.Column):
             border_radius=10,
             width=150,
             height=100
+        )
+
+    def _build_user_card(self, u):
+        """Builds a card representation of a user."""
+        
+        if u['is_admin']:
+            bt_del_atributos = {
+                'inativo': True,
+                'cor': ft.Colors.BLACK12,
+                'tooltip': 'Não pode ser excluído'
+            }
+        else:
+            bt_del_atributos = {
+                'inativo': False,
+                'cor': ft.Colors.RED,
+                'tooltip': 'Excluir Cadastro'
+            }
+
+        return ft.Container(
+            content=ft.Column([
+                ft.Row([
+                    ft.Icon(ft.Icons.PERSON, size=40, color=ft.Colors.BLUE),
+                    ft.Column([
+                        ft.Text(u['nome'], weight=ft.FontWeight.BOLD, size=16),
+                        ft.Text(f"CPF: {u['cpf']}", size=12, color=ft.Colors.GREY),
+                    ], expand=True),
+                    ft.Column([
+                         ft.Text(f"Pendente: R$ {u['pendente']:.2f}", color=ft.Colors.RED, weight=ft.FontWeight.BOLD),
+                         ft.Text(f"Pago: R$ {u['pagos']:.2f}", color=ft.Colors.GREEN),
+                    ], alignment=ft.MainAxisAlignment.END, horizontal_alignment=ft.CrossAxisAlignment.END),
+                ]),
+                ft.Divider(),
+                ft.Row([
+                     ft.Text(f"Maior Pago: R$ {u['maior_pago']:.2f}", size=12, color=ft.Colors.GREY),
+                     ft.Container(expand=True),
+                     ft.IconButton(ft.Icons.EDIT, icon_color=ft.Colors.BLUE, tooltip="Editar Cadastro", on_click=lambda e: self._show_action_dialog("editar", u)),
+                     ft.IconButton(ft.Icons.ATTACH_MONEY, icon_color=ft.Colors.ORANGE, tooltip="Adicionar Dívida", on_click=lambda e: self._show_action_dialog("divida", u)),
+                     ft.IconButton(ft.Icons.DELETE, icon_color=bt_del_atributos['cor'], tooltip=bt_del_atributos['tooltip'], on_click=lambda e: self._show_action_dialog("deletar usuario", u), disabled=bt_del_atributos['inativo']),
+                ], alignment=ft.MainAxisAlignment.END)
+            ]),
+            padding=15,
+            bgcolor=ft.Colors.WHITE,
+            border_radius=10,
+            shadow=ft.BoxShadow(blur_radius=5, color=ft.Colors.BLACK12),
+            margin=ft.margin.only(bottom=5)
+        )
+
+    def _build_transaction_card(self, d, type_t):
+        """Builds a card representation for a Debt or Entry."""
+        is_debt = type_t == 'divida'
+        color = ft.Colors.RED if is_debt else ft.Colors.GREEN
+        icon = ft.Icons.MONEY_OFF if is_debt else ft.Icons.ATTACH_MONEY
+        date_label = d.get('data_divida') if is_debt else d.get('data')
+        
+        return ft.Container(
+            content=ft.Row([
+                ft.Container(width=5, bgcolor=color, border_radius=ft.border_radius.only(top_left=10, bottom_left=10)),
+                ft.Container(
+                    content=ft.Column([
+                        ft.Row([
+                            ft.Icon(icon, color=color, size=30),
+                            ft.Column([
+                                ft.Text(d['categoria'], weight=ft.FontWeight.BOLD, size=16),
+                                ft.Text(f"{d['nome']} ({d['cpf']})", size=12, color=ft.Colors.GREY),
+                            ], expand=True),
+                            ft.Column([
+                                ft.Text(f"R$ {d['valor']:.2f}", weight=ft.FontWeight.BOLD, size=16, color=color),
+                            ], alignment=ft.MainAxisAlignment.END, horizontal_alignment=ft.CrossAxisAlignment.END),
+                        ]),
+                        ft.Container(height=5),
+                        ft.Row([
+                            ft.Icon(ft.Icons.CALENDAR_TODAY, size=14, color=ft.Colors.GREY),
+                            ft.Text(f"{date_label}", size=12, color=ft.Colors.GREY),
+                            ft.Container(width=10),
+                            # Show Data Prevista for Debts
+                            ft.Row([
+                                ft.Icon(ft.Icons.EVENT, size=14, color=ft.Colors.ORANGE) if is_debt else ft.Container(),
+                                ft.Text(f"Prev: {d.get('data_prevista', '')}", size=12, color=ft.Colors.GREY) if is_debt else ft.Container()
+                            ]),
+                            ft.Container(expand=True),
+                             ft.IconButton(ft.Icons.EDIT, icon_color=ft.Colors.BLUE, tooltip="Editar", on_click=lambda e: self._show_action_dialog("editar_transacao", d, type_t)),
+                             ft.IconButton(ft.Icons.DELETE, icon_color=ft.Colors.RED, tooltip="Deletar", on_click=lambda e: self._show_action_dialog("deletar transacao", d, type_t))
+                        ], alignment=ft.MainAxisAlignment.START, vertical_alignment=ft.CrossAxisAlignment.CENTER)
+                    ]),
+                    padding=10,
+                    expand=True
+                )
+            ]),
+            bgcolor=ft.Colors.WHITE,
+            border_radius=10,
+            shadow=ft.BoxShadow(blur_radius=5, color=ft.Colors.BLACK12),
+            margin=ft.margin.only(bottom=5),
+            height=120 # Fixed height for consistency or Auto if removed
         )
 
     # ==========================
@@ -415,59 +690,45 @@ class GestaoView(ft.Column):
                     'tooltip': 'Excluir Cadastro'
                 }
 
-            rows.append(ft.DataRow(cells=[
-                ft.DataCell(ft.Text(u['cpf'])),
-                ft.DataCell(ft.Text(u['nome'])),
-                ft.DataCell(ft.Text(f"R$ {u['pendente']:.2f}")),
-                ft.DataCell(ft.Text(f"R$ {u['pagos']:.2f}")),
-                ft.DataCell(ft.Text(f"R$ {u['maior_pago']:.2f}")),
-                # ft.DataCell(ft.Text(u['is_admin'])),
-                ft.DataCell(ft.Row([
-                    ft.IconButton(ft.Icons.EDIT, icon_color=ft.Colors.BLUE, tooltip="Editar Cadastro", on_click=lambda e, u=u: self._show_action_dialog("editar", u)),
-                    ft.IconButton(ft.Icons.ATTACH_MONEY, icon_color=ft.Colors.ORANGE, tooltip="Adicionar Dívida", on_click=lambda e, u=u: self._show_action_dialog("divida", u)),
-                    ft.IconButton(ft.Icons.DELETE, icon_color=bt_del_atributos['cor'], tooltip=bt_del_atributos['tooltip'], on_click=lambda e, u=u: self._show_action_dialog("deletar usuario", u), disabled=bt_del_atributos['inativo']),
-                ])),
-            ]))
-        self.users_table.rows = rows
+    def update_usuarios_table(self):
+        """Refreshes the User Management list."""
+        users = self.controller.get_usuarios()
+        search = self.search_field.value.lower() if hasattr(self, 'search_field') and self.search_field.value else ""
+        
+        self.users_column.controls.clear()
+        
+        for u in users:
+            if search and (search not in u['cpf'].lower() and search not in u['nome'].lower()):
+                continue
+            
+            self.users_column.controls.append(self._build_user_card(u))
+
         self.page.update()
 
     def update_dividas_table(self):
         """Refreshes the Debts table."""
         data = self.controller.get_dividas(self.search_dividas.value if hasattr(self, 'search_dividas') else "")
-        rows = []
+    def update_dividas_table(self):
+        """Refreshes the Debts list."""
+        data = self.controller.get_dividas(self.search_dividas.value if hasattr(self, 'search_dividas') else "")
+        self.dividas_column.controls.clear()
+        
         for d in data:
-            rows.append(ft.DataRow(cells=[
-                ft.DataCell(ft.Text(d['cpf'])),
-                ft.DataCell(ft.Text(d['nome'])),
-                ft.DataCell(ft.Text(d['categoria'])),
-                ft.DataCell(ft.Text(f"R$ {d['valor']:.2f}")),
-                ft.DataCell(ft.Text(d.get('data_divida', ''))),
-                ft.DataCell(ft.Text(d.get('data_prevista', ''))),
-                ft.DataCell(ft.Row([
-                    ft.IconButton(ft.Icons.EDIT, icon_color=ft.Colors.BLUE, tooltip="Editar", on_click=lambda e, d=d: self._show_action_dialog("editar_transacao", d, "divida")),
-                    ft.IconButton(ft.Icons.DELETE, icon_color=ft.Colors.RED, tooltip="Deletar", on_click=lambda e, d=d: self._show_action_dialog("deletar transacao", d, "divida"))
-                ])),
-            ]))
-        self.dividas_table.rows = rows
+            self.dividas_column.controls.append(self._build_transaction_card(d, "divida"))
+            
         self.page.update()
 
     def update_entradas_table(self):
         """Refreshes the Payments table."""
         data = self.controller.get_entradas(self.search_entradas.value if hasattr(self, 'search_entradas') else "")
-        rows = []
+    def update_entradas_table(self):
+        """Refreshes the Payments list."""
+        data = self.controller.get_entradas(self.search_entradas.value if hasattr(self, 'search_entradas') else "")
+        self.entradas_column.controls.clear()
+        
         for d in data:
-            rows.append(ft.DataRow(cells=[
-                ft.DataCell(ft.Text(d['cpf'])),
-                ft.DataCell(ft.Text(d['nome'])),
-                ft.DataCell(ft.Text(d['categoria'])),
-                ft.DataCell(ft.Text(f"R$ {d['valor']:.2f}")),
-                ft.DataCell(ft.Text(d['data'])),
-                ft.DataCell(ft.Row([
-                    ft.IconButton(ft.Icons.EDIT, icon_color=ft.Colors.BLUE, tooltip="Editar", on_click=lambda e, d=d: self._show_action_dialog("editar_transacao", d, "entrada")),
-                    ft.IconButton(ft.Icons.DELETE, icon_color=ft.Colors.RED, tooltip="Deletar", on_click=lambda e, d=d: self._show_action_dialog("deletar transacao", d, "entrada"))
-                ])),
-            ])) 
-        self.entradas_table.rows = rows
+            self.entradas_column.controls.append(self._build_transaction_card(d, "entrada"))
+            
         self.page.update()
 
     def update_reports(self):
@@ -527,26 +788,8 @@ class GestaoView(ft.Column):
             tipo=tipo
         )
         
-        rows = []
-        for t in transactions:
-            # Determinar cor e tipo baseado no type
-            if t['type'] == 'DEBT':
-                tipo_text = ft.Text("Dívida", color=ft.Colors.RED)
-                data_display = t['data_divida']
-            else:
-                tipo_text = ft.Text("Entrada", color=ft.Colors.GREEN)
-                data_display = t['data_entrada']
-            
-            rows.append(ft.DataRow(cells=[
-                ft.DataCell(tipo_text),
-                ft.DataCell(ft.Text(t['cpf'])),
-                ft.DataCell(ft.Text(t['nome'])),
-                ft.DataCell(ft.Text(t['categoria'])),
-                ft.DataCell(ft.Text(f"R$ {t['valor']:.2f}")),
-                ft.DataCell(ft.Text(data_display)),
-            ]))
         
-        self.report_table.rows = rows
+        self.report_list.controls = [self._build_report_item(t) for t in transactions]
         self.page.update()
 
     # ==========================
@@ -598,7 +841,8 @@ class GestaoView(ft.Column):
             title=ft.Text(title),
             content=content,
             actions=actions,
-            modal=True
+            modal=True,
+            # Make dialog itself responsive width if needed, or rely on content
         )
         self.page.open(self.dialog)
         self.page.update()
@@ -610,42 +854,47 @@ class GestaoView(ft.Column):
         
         # Determine mode
         is_transaction_mode = (transaction_type is not None) or (user_data is not None)
+        title_text = "Nova Transação" if user_data else ("Nova Dívida" if transaction_type == "divida" else "Nova Entrada") if transaction_type else "Novo Usuário"
+        if not is_transaction_mode: title_text = "Novo Usuário"
 
         if user_data:
             self.is_adding_transaction = True
-            title_text = "Nova Transação"
         elif transaction_type:
-            self.is_adding_transaction = True
-            title_text = "Nova Dívida" if transaction_type == "divida" else "Nova Entrada"
+             self.is_adding_transaction = True
         else:
-            self.is_adding_transaction = False
-            title_text = "Novo Usuário"
+             self.is_adding_transaction = False
 
         # User Locator (Dropdown) for Translations
         self.nu_user_dropout = ft.Dropdown(
             label="Selecione o Usuário",
-            width=500,
+            # width=500, # REMOVED FIXED WIDTH
             editable=True,
             leading_icon=ft.Icons.SEARCH,
             options=[],
             enable_filter=True,
-            visible=False
+            visible=False,
+            col={"xs": 12}
         )
 
         # Standard Fields (for New User or Read-only display)
-        self.nu_cpf = ft.TextField(label="CPF", width=250, input_filter=ft.InputFilter(allow=True, regex_string=r"[0-9]", replacement_string=""), max_length=11)
-        self.nu_nome = ft.TextField(label="Nome", expand=True)
+        self.nu_cpf = ft.TextField(
+            label="CPF", 
+            input_filter=ft.InputFilter(allow=True, regex_string=r"[0-9]", replacement_string=""), 
+            max_length=11,
+            col={"xs": 12, "sm": 12, "md": 12, "lg": 6}
+        )
+        self.nu_nome = ft.TextField(label="Nome", col={"xs": 12, "sm": 12, "md": 12, "lg": 6})
 
         categorias = self.controller.get_categorias()
         cat_opts = [ft.dropdown.Option(text=c['categoria']) for c in categorias]
 
         self.nu_categoria = ft.Dropdown(
             label="Categoria",
-            width=250,
+             col={"xs": 12, "sm": 12, "md": 12, "lg": 6},
             options=cat_opts
         )
 
-        self.nu_valor = ft.TextField(label="Valor R$", width=250, prefix_text="R$ ", keyboard_type=ft.KeyboardType.NUMBER)
+        self.nu_valor = ft.TextField(label="Valor R$", prefix_text="R$ ", keyboard_type=ft.KeyboardType.NUMBER, col={"xs": 12, "sm": 12, "md": 12, "lg": 6})
        
         # Logic to populate fields
         if is_transaction_mode:
@@ -686,26 +935,26 @@ class GestaoView(ft.Column):
         self.nu_data_label = ft.Text("Data Dívida", size=16) 
         self.nu_data = ft.TextField(
             label="Data Dívida",
-            width=250,
             value=datetime.now().strftime("%Y-%m-%d"),
             read_only=True,
             suffix=ft.IconButton(
                 icon=ft.Icons.CALENDAR_MONTH,
                 on_click=lambda e: self.page.open(self.date_picker)
-            )
+            ),
+            col={"xs": 12, "sm": 12, "md": 12, "lg": 6}
         )
 
         # New Field: Data Prevista
         self.nu_data_prevista = ft.TextField(
             label="Data Prevista",
-            width=250,
             value=datetime.now().strftime("%Y-%m-%d"),
             read_only=True,
             visible=False, # Hidden by default, shown if Debt
             suffix=ft.IconButton(
                 icon=ft.Icons.CALENDAR_MONTH,
                 on_click=lambda e: self.page.open(self.date_picker_prevista)
-            )
+            ),
+             col={"xs": 12, "sm": 12, "md": 12, "lg": 6}
         )
         
         if not hasattr(self, 'date_picker_prevista'):
@@ -722,22 +971,27 @@ class GestaoView(ft.Column):
             ft.Icon(ft.Icons.ATTACH_MONEY, color=ft.Colors.GREEN_300),
         ], alignment=ft.MainAxisAlignment.START)
 
+        # Dynamic Width Calculation
+        dialog_width = 600
+        if self.page:
+             dialog_width = min(self.page.width - 20, 600)
+
         # Form Layout
         content = ft.Container(
             content=ft.Column([
                 ft.Row([ft.Icon(ft.Icons.PERSON_ADD, size=30, color=ft.Colors.BLUE), ft.Text(title_text, size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE)]),
                 ft.Divider(),
                 # User Selection Area
-                self.nu_user_dropout,
-                ft.Row([self.nu_cpf, self.nu_nome]),
-                
-                ft.Row([self.nu_categoria, self.nu_valor]),
+                ft.ResponsiveRow([self.nu_user_dropout]),
+                ft.ResponsiveRow([self.nu_cpf, self.nu_nome], run_spacing=10),
+                ft.ResponsiveRow([self.nu_categoria, self.nu_valor], run_spacing=10),
                 ft.Row([toggle_row]),
-                ft.Row([self.nu_data, self.nu_data_prevista], alignment=ft.MainAxisAlignment.START, spacing=50),
-            ], tight=True, width=600),
+                ft.ResponsiveRow([self.nu_data, self.nu_data_prevista], run_spacing=10),
+            ], tight=True, scroll=ft.ScrollMode.ADAPTIVE),
             padding=20,
             bgcolor=ft.Colors.WHITE,
-            border_radius=10
+            border_radius=10,
+            width=dialog_width
         )
 
         # Triggers visibility check
@@ -764,20 +1018,25 @@ class GestaoView(ft.Column):
     def _build_edit_user_dialog_content(self, user_data):
         """Builds content for Editing a User."""
         self.eu_original_data = user_data
-        self.eu_cpf = ft.TextField(label="CPF", value=user_data['cpf'], read_only=True, bgcolor=ft.Colors.GREY_100)
-        self.eu_nome = ft.TextField(label="Nome", value=user_data['nome'], expand=True)
-        self.eu_senha = ft.TextField(label="Senha", password=True, can_reveal_password=True)
+        self.eu_cpf = ft.TextField(label="CPF", value=user_data['cpf'], read_only=True, bgcolor=ft.Colors.GREY_100, col={"xs": 12, "sm": 12, "md": 12, "lg": 6})
+        self.eu_nome = ft.TextField(label="Nome", value=user_data['nome'], col={"xs": 12, "sm": 12, "md": 12, "lg": 6})
+        self.eu_senha = ft.TextField(label="Senha", password=True, can_reveal_password=True, col={"xs": 12})
+
+        dialog_width = 600
+        if self.page:
+             dialog_width = min(self.page.width - 20, 600)
 
         content = ft.Container(
             content=ft.Column([
                 ft.Row([ft.Icon(ft.Icons.EDIT, size=30, color=ft.Colors.BLUE), ft.Text("Edição de Usuário", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE)]),
                 ft.Divider(),
-                ft.Row([self.eu_cpf, self.eu_nome]),
-                self.eu_senha,
-            ], tight=True, width=600),
+                ft.ResponsiveRow([self.eu_cpf, self.eu_nome], run_spacing=10),
+                ft.ResponsiveRow([self.eu_senha], run_spacing=10),
+            ], tight=True, scroll=ft.ScrollMode.ADAPTIVE),
             padding=20,
             bgcolor=ft.Colors.WHITE,
-            border_radius=10
+            border_radius=10,
+            width=dialog_width
         )
 
         actions = [
@@ -805,11 +1064,11 @@ class GestaoView(ft.Column):
         
         self.et_user_dropdown = ft.Dropdown(
             label="Usuário",
-            width=400,
             options=opts,
             value=data.get('cpf'),
             enable_filter=True,
-            leading_icon=ft.Icons.SEARCH
+            leading_icon=ft.Icons.SEARCH,
+            col={"xs": 12}
         )
         self.et_selected_cpf = data.get('cpf') # Fallback if not changed
 
@@ -819,13 +1078,13 @@ class GestaoView(ft.Column):
         # Category Selector (Dropdown)
         self.et_categoria = ft.Dropdown(
             label="Categoria",
-            width=300,
             value=data.get('categoria'),
-            options=cat_opts
+            options=cat_opts,
+            col={"xs": 12, "sm": 12, "md": 12, "lg": 6}
         )
 
         # Value Input (TextField)
-        self.et_valor = ft.TextField(label="Valor", width=300, prefix_text="R$ ", value=str(data.get('valor')), keyboard_type=ft.KeyboardType.NUMBER)
+        self.et_valor = ft.TextField(label="Valor", prefix_text="R$ ", value=str(data.get('valor')), keyboard_type=ft.KeyboardType.NUMBER, col={"xs": 12, "sm": 12, "md": 12, "lg": 6})
         
         # Date Logic
         # Determines which date field to pre-fill based on type
@@ -839,13 +1098,13 @@ class GestaoView(ft.Column):
         self.et_data_label = ft.Text("Data Dívida" if transaction_type == "divida" else "Data Pagamento", size=16)
         self.et_data = ft.TextField(
             label="Data Dívida" if transaction_type == "divida" else "Data Pagamento",
-            width=300,
             value=initial_date,
             read_only=True,
             suffix=ft.IconButton(
                 icon=ft.Icons.CALENDAR_MONTH,
                 on_click=lambda e: self.page.open(self.et_date_picker)
-            )
+            ),
+            col={"xs": 12, "sm": 12, "md": 12, "lg": 6}
         )
         
         # Data Prevista (Only for Debt)
@@ -855,47 +1114,53 @@ class GestaoView(ft.Column):
 
         self.et_data_prevista = ft.TextField(
             label="Data Prevista",
-            width=300,
             value=initial_prevista,
             read_only=True,
             visible=(transaction_type == "divida"),
             suffix=ft.IconButton(
                 icon=ft.Icons.CALENDAR_MONTH,
                 on_click=lambda e: self.page.open(self.et_date_picker_prevista)
-            )
+            ),
+            col={"xs": 12, "sm": 12, "md": 12, "lg": 6}
         )
         
         # Pickers for Edit Mode (Need distinct instances or shared)
         # Creating distinct to avoid conflicts with "New" mode dialogs if any overlap (unlikely but safe)
-        self.et_date_picker = ft.DatePicker(
-            on_change=lambda e: setattr(self.et_data, 'value', e.control.value.strftime("%Y-%m-%d")) or self.page.update(),
-            first_date=datetime(2020, 1, 1),
-            last_date=datetime(2030, 12, 31)
-        )
-        self.page.overlay.append(self.et_date_picker)
+        if not hasattr(self, 'et_date_picker'):
+             self.et_date_picker = ft.DatePicker(
+                on_change=lambda e: setattr(self.et_data, 'value', e.control.value.strftime("%Y-%m-%d")) or self.page.update(),
+                first_date=datetime(2020, 1, 1),
+                last_date=datetime(2030, 12, 31)
+            )
+             self.page.overlay.append(self.et_date_picker)
         
-        self.et_date_picker_prevista = ft.DatePicker(
-            on_change=lambda e: setattr(self.et_data_prevista, 'value', e.control.value.strftime("%Y-%m-%d")) or self.page.update(),
-            first_date=datetime(2020, 1, 1),
-            last_date=datetime(2030, 12, 31)
-        )
-        self.page.overlay.append(self.et_date_picker_prevista)
+        if not hasattr(self, 'et_date_picker_prevista'):
+             self.et_date_picker_prevista = ft.DatePicker(
+                on_change=lambda e: setattr(self.et_data_prevista, 'value', e.control.value.strftime("%Y-%m-%d")) or self.page.update(),
+                first_date=datetime(2020, 1, 1),
+                last_date=datetime(2030, 12, 31)
+            )
+             self.page.overlay.append(self.et_date_picker_prevista)
         
         title_text = "Editar Transação"
  
+        dialog_width = 600
+        if self.page:
+             dialog_width = min(self.page.width - 20, 600)
+
         # Content
         content = ft.Container(
              content=ft.Column([
                 ft.Text(title_text, size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE),
                 ft.Divider(),
-                self.et_user_dropdown, 
-                self.et_categoria,
-                self.et_valor,
-                ft.Row([self.et_data, self.et_data_prevista], alignment=ft.MainAxisAlignment.START)
-            ], tight=True, width=600),
+                ft.ResponsiveRow([self.et_user_dropdown]), 
+                ft.ResponsiveRow([self.et_categoria, self.et_valor], run_spacing=10),
+                ft.ResponsiveRow([self.et_data, self.et_data_prevista], run_spacing=10)
+            ], tight=True, scroll=ft.ScrollMode.ADAPTIVE),
             padding=20,
             bgcolor=ft.Colors.WHITE,
-            border_radius=10
+            border_radius=10,
+            width=dialog_width
         )
         
         actions = [
