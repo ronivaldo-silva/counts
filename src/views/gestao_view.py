@@ -86,7 +86,7 @@ class GestaoView(ft.Column):
         )
 
         # List Container
-        self.users_column = ft.Column(spacing=10, scroll=ft.ScrollMode.ADAPTIVE)
+        self.users_column = ft.Column(spacing=10, scroll=ft.ScrollMode.ADAPTIVE, expand=True)
         
         # Initial Load
         self.update_usuarios_table()
@@ -131,7 +131,7 @@ class GestaoView(ft.Column):
             alignment=ft.MainAxisAlignment.START
         )
 
-        self.dividas_column = ft.Column(spacing=10, scroll=ft.ScrollMode.ADAPTIVE)
+        self.dividas_column = ft.Column(spacing=10, scroll=ft.ScrollMode.ADAPTIVE, expand=True)
         
         self.update_dividas_table()
 
@@ -174,7 +174,7 @@ class GestaoView(ft.Column):
             alignment=ft.MainAxisAlignment.START
         )
 
-        self.entradas_column = ft.Column(spacing=10, scroll=ft.ScrollMode.ADAPTIVE)
+        self.entradas_column = ft.Column(spacing=10, scroll=ft.ScrollMode.ADAPTIVE, expand=True)
         
         self.update_entradas_table()
 
@@ -663,7 +663,7 @@ class GestaoView(ft.Column):
     # Data Updaters
     # ==========================
 
-    def update_usuarios_table(self):
+    def deprecate_update_usuarios_table(self):
         """Refreshes the User Management table from controller data."""
         users = self.controller.get_usuarios()
         # Filter if search is active (optional, could implement here or in controller)
@@ -705,7 +705,7 @@ class GestaoView(ft.Column):
 
         self.page.update()
 
-    def update_dividas_table(self):
+    def deprecate_update_dividas_table(self):
         """Refreshes the Debts table."""
         data = self.controller.get_dividas(self.search_dividas.value if hasattr(self, 'search_dividas') else "")
     def update_dividas_table(self):
@@ -718,7 +718,7 @@ class GestaoView(ft.Column):
             
         self.page.update()
 
-    def update_entradas_table(self):
+    def deprecate_update_entradas_table(self):
         """Refreshes the Payments table."""
         data = self.controller.get_entradas(self.search_entradas.value if hasattr(self, 'search_entradas') else "")
     def update_entradas_table(self):
