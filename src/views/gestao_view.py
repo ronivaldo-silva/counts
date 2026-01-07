@@ -450,9 +450,12 @@ class GestaoView(ft.Column):
                     expand=True,
                     padding=ft.padding.only(bottom=20)
                 ) 
-            ], expand=True),
-            padding=20,
-            expand=True
+            ],
+            expand=True,
+            scroll=ft.ScrollMode.ALWAYS,
+            ),
+        padding=20,
+        expand=True
         )
 
     def _show_filter_dialog(self):
@@ -560,10 +563,10 @@ class GestaoView(ft.Column):
                 ft.Text(value, size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
             ]),
             bgcolor=color,
-            padding=15,
+            padding=10,
             border_radius=10,
             width=150,
-            height=100
+            height=80
         )
 
     def _build_user_card(self, u):
@@ -617,7 +620,16 @@ class GestaoView(ft.Column):
         color = ft.Colors.RED if is_debt else ft.Colors.GREEN
         icon = ft.Icons.MONEY_OFF if is_debt else ft.Icons.ATTACH_MONEY
         date_label = d.get('data_divida') if is_debt else d.get('data')
+
+        # Novos botões
+        ## Criar ação para eles no controller
+        bt_quitar = ft.IconButton(ft.Icons.ATTACH_MONEY, icon_color=ft.Colors.GREEN_300, tooltip="Quitar", on_click=lambda e: self._show_action_dialog("quitar_transacao", d, type_t), disabled=True)
+        bt_recibo = ft.IconButton(ft.Icons.RECEIPT, icon_color=ft.Colors.BLUE_300, tooltip="Recibo", on_click=lambda e: self._show_action_dialog("recibo_transacao", d, type_t), disabled=True)
         
+        bt_quitar.icon_color = ft.Colors.GREY_300
+        bt_recibo.icon_color = ft.Colors.GREY_300
+
+
         return ft.Container(
             content=ft.Row([
                 ft.Container(width=5, bgcolor=color, border_radius=ft.border_radius.only(top_left=10, bottom_left=10)),
@@ -626,14 +638,13 @@ class GestaoView(ft.Column):
                         ft.Row([
                             ft.Icon(icon, color=color, size=30),
                             ft.Column([
-                                ft.Text(d['categoria'], weight=ft.FontWeight.BOLD, size=16),
-                                ft.Text(f"{d['nome']} ({d['cpf']})", size=12, color=ft.Colors.GREY),
+                                ft.Text(d['categoria'], weight=ft.FontWeight.BOLD, size=14),
+                                ft.Row( [ ft.Text(f"{d['nome']}", size=12, color=ft.Colors.GREY),ft.Text(f"{d['cpf']}", size=10, color=ft.Colors.GREY)], wrap=True),
                             ], expand=True),
                             ft.Column([
                                 ft.Text(f"R$ {d['valor']:.2f}", weight=ft.FontWeight.BOLD, size=16, color=color),
                             ], alignment=ft.MainAxisAlignment.END, horizontal_alignment=ft.CrossAxisAlignment.END),
                         ]),
-                        ft.Container(height=5),
                         ft.Row([
                             ft.Icon(ft.Icons.CALENDAR_TODAY, size=14, color=ft.Colors.GREY),
                             ft.Text(f"{date_label}", size=12, color=ft.Colors.GREY),
@@ -643,9 +654,11 @@ class GestaoView(ft.Column):
                                 ft.Icon(ft.Icons.EVENT, size=14, color=ft.Colors.ORANGE) if is_debt else ft.Container(),
                                 ft.Text(f"Prev: {d.get('data_prevista', '')}", size=12, color=ft.Colors.GREY) if is_debt else ft.Container()
                             ]),
+                            # Botões de ação dos cartões
                             ft.Container(expand=True),
                              ft.IconButton(ft.Icons.EDIT, icon_color=ft.Colors.BLUE, tooltip="Editar", on_click=lambda e: self._show_action_dialog("editar_transacao", d, type_t)),
-                             ft.IconButton(ft.Icons.DELETE, icon_color=ft.Colors.RED, tooltip="Deletar", on_click=lambda e: self._show_action_dialog("deletar transacao", d, type_t))
+                             bt_quitar if is_debt else bt_recibo,
+                             ft.IconButton(ft.Icons.DELETE, icon_color=ft.Colors.RED, tooltip="Deletar", on_click=lambda e: self._show_action_dialog("deletar transacao", d, type_t)),
                         ], alignment=ft.MainAxisAlignment.START, vertical_alignment=ft.CrossAxisAlignment.CENTER)
                     ]),
                     padding=10,
@@ -656,7 +669,7 @@ class GestaoView(ft.Column):
             border_radius=10,
             shadow=ft.BoxShadow(blur_radius=5, color=ft.Colors.BLACK12),
             margin=ft.margin.only(bottom=5),
-            height=120 # Fixed height for consistency or Auto if removed
+            #height=120 # Fixed height for consistency or Auto if removed
         )
 
     # ==========================
