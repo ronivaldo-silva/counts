@@ -82,6 +82,29 @@ class DashboardView(ft.Column):
             shadow=ft.BoxShadow(blur_radius=10, color=ft.Colors.with_opacity(0.2, ft.Colors.RED_400))
         )
 
+        # --- Aletr Card ---
+        # “Pague sua mensalidade através do carnê recebido pelo banco Asaas”
+        alert_card = ft.Container(
+            content=ft.Row(
+                [
+                    ft.Icon(ft.Icons.ANNOUNCEMENT, color=ft.Colors.WHITE, size=40),
+                    ft.Column(
+                        [
+                            ft.Text("Importante", color=ft.Colors.WHITE, size=18, weight=ft.FontWeight.BOLD),
+                            ft.Text("Pague sua mensalidade através do carnê recebido pelo banco Asaas", color=ft.Colors.WHITE70, size=18, width=250, no_wrap=False),
+                        ],
+                        spacing=0
+                    )
+                ],
+                alignment=ft.MainAxisAlignment.START,
+            ),
+            bgcolor=ft.Colors.ORANGE_400, # Matches the red/salmon color
+            border_radius=15,
+            padding=20,
+            width=350, # Fixed width for the card style
+            shadow=ft.BoxShadow(blur_radius=10, color=ft.Colors.with_opacity(0.2, ft.Colors.ORANGE_400))
+        )
+
         # --- Debts List ---
         debt_items = []
         for item in self.data["dividas_agrupadas"]:
@@ -150,7 +173,7 @@ class DashboardView(ft.Column):
         # Left side: Total Card + Debts List
         left_content = ft.Column(
             [
-                total_card,
+                ft.Row( [total_card, alert_card], wrap=True ),
                 ft.Container(height=20),
                 debts_column
             ],
