@@ -585,6 +585,8 @@ class GestaoView(ft.Column):
                 'tooltip': 'Excluir Cadastro'
             }
 
+        def_icon_size = 16
+
         return ft.Container(
             content=ft.Column([
                 ft.Row([
@@ -602,9 +604,9 @@ class GestaoView(ft.Column):
                 ft.Row([
                      ft.Text(f"Maior Pago: R$ {u['maior_pago']:.2f}", size=12, color=ft.Colors.GREY),
                      ft.Container(expand=True),
-                     ft.IconButton(ft.Icons.EDIT, icon_color=ft.Colors.BLUE, tooltip="Editar Cadastro", on_click=lambda e: self._show_action_dialog("editar", u)),
-                     ft.IconButton(ft.Icons.ATTACH_MONEY, icon_color=ft.Colors.ORANGE, tooltip="Adicionar Dívida", on_click=lambda e: self._show_action_dialog("divida", u)),
-                     ft.IconButton(ft.Icons.DELETE, icon_color=bt_del_atributos['cor'], tooltip=bt_del_atributos['tooltip'], on_click=lambda e: self._show_action_dialog("deletar usuario", u), disabled=bt_del_atributos['inativo']),
+                     ft.IconButton(ft.Icons.EDIT, icon_color=ft.Colors.BLUE, tooltip="Editar Cadastro", on_click=lambda e: self._show_action_dialog("editar", u), icon_size=def_icon_size),
+                     ft.IconButton(ft.Icons.ATTACH_MONEY, icon_color=ft.Colors.ORANGE, tooltip="Adicionar Dívida", on_click=lambda e: self._show_action_dialog("divida", u), icon_size=def_icon_size),
+                     ft.IconButton(ft.Icons.DELETE, icon_color=bt_del_atributos['cor'], tooltip=bt_del_atributos['tooltip'], on_click=lambda e: self._show_action_dialog("deletar usuario", u), disabled=bt_del_atributos['inativo'], icon_size=def_icon_size),
                 ], alignment=ft.MainAxisAlignment.END)
             ]),
             padding=15,
@@ -621,14 +623,42 @@ class GestaoView(ft.Column):
         icon = ft.Icons.MONEY_OFF if is_debt else ft.Icons.ATTACH_MONEY
         date_label = d.get('data_divida') if is_debt else d.get('data')
 
+        def_icon_size = 16
         # Novos botões
         ## Criar ação para eles no controller
-        bt_quitar = ft.IconButton(ft.Icons.ATTACH_MONEY, icon_color=ft.Colors.GREEN_300, tooltip="Quitar", on_click=lambda e: self._show_action_dialog("quitar_transacao", d, type_t), disabled=True)
-        bt_recibo = ft.IconButton(ft.Icons.RECEIPT, icon_color=ft.Colors.BLUE_300, tooltip="Recibo", on_click=lambda e: self._show_action_dialog("recibo_transacao", d, type_t), disabled=True)
+        bt_quitar = ft.IconButton(ft.Icons.ATTACH_MONEY, icon_color=ft.Colors.GREEN_300, tooltip="Quitar", on_click=lambda e: self._show_action_dialog("quitar_transacao", d, type_t), disabled=True, icon_size=def_icon_size)
+        bt_recibo = ft.IconButton(ft.Icons.RECEIPT, icon_color=ft.Colors.BLUE_300, tooltip="Recibo", on_click=lambda e: self._show_action_dialog("recibo_transacao", d, type_t), disabled=True, icon_size=def_icon_size)
         
         bt_quitar.icon_color = ft.Colors.GREY_300
         bt_recibo.icon_color = ft.Colors.GREY_300
 
+        data_transation = ft.Row([
+            ft.Icon(ft.Icons.CALENDAR_TODAY, size=14, color=ft.Colors.ORANGE_300),
+            ft.Text(f"gerado:{date_label}", size=12, color=ft.Colors.GREY),
+            ],
+        alignment=ft.MainAxisAlignment.START
+        )
+
+        data_prevista = ft.Row([
+            ft.Icon(ft.Icons.EVENT, size=14, color=ft.Colors.RED_300),
+            ft.Text(f"previsao: {d['data_prevista']}", size=12, color=ft.Colors.GREY),
+            ], 
+        alignment=ft.MainAxisAlignment.START
+        )
+
+        row_datas = ft.Column([
+            ft.Row([
+                data_transation,
+                data_prevista if is_debt else ft.Container(),
+            ], alignment=ft.MainAxisAlignment.START, wrap=True, width=800),
+        ], expand=True,
+        )
+
+        action_buttons = ft.Row([
+                ft.IconButton(ft.Icons.EDIT, icon_color=ft.Colors.BLUE, tooltip="Editar", on_click=lambda e: self._show_action_dialog("editar_transacao", d, type_t), icon_size=def_icon_size),
+                bt_quitar if is_debt else bt_recibo,
+                ft.IconButton(ft.Icons.DELETE, icon_color=ft.Colors.RED, tooltip="Deletar", on_click=lambda e: self._show_action_dialog("deletar transacao", d, type_t), icon_size=def_icon_size),
+            ], alignment=ft.CrossAxisAlignment.END, wrap=True)
 
         return ft.Container(
             content=ft.Row([
@@ -646,19 +676,9 @@ class GestaoView(ft.Column):
                             ], alignment=ft.MainAxisAlignment.END, horizontal_alignment=ft.CrossAxisAlignment.END),
                         ]),
                         ft.Row([
-                            ft.Icon(ft.Icons.CALENDAR_TODAY, size=14, color=ft.Colors.GREY),
-                            ft.Text(f"{date_label}", size=12, color=ft.Colors.GREY),
-                            ft.Container(width=10),
-                            # Show Data Prevista for Debts
-                            ft.Row([
-                                ft.Icon(ft.Icons.EVENT, size=14, color=ft.Colors.ORANGE) if is_debt else ft.Container(),
-                                ft.Text(f"Prev: {d.get('data_prevista', '')}", size=12, color=ft.Colors.GREY) if is_debt else ft.Container()
-                            ]),
-                            # Botões de ação dos cartões
+                            row_datas,
                             ft.Container(expand=True),
-                             ft.IconButton(ft.Icons.EDIT, icon_color=ft.Colors.BLUE, tooltip="Editar", on_click=lambda e: self._show_action_dialog("editar_transacao", d, type_t)),
-                             bt_quitar if is_debt else bt_recibo,
-                             ft.IconButton(ft.Icons.DELETE, icon_color=ft.Colors.RED, tooltip="Deletar", on_click=lambda e: self._show_action_dialog("deletar transacao", d, type_t)),
+                            action_buttons
                         ], alignment=ft.MainAxisAlignment.START, vertical_alignment=ft.CrossAxisAlignment.CENTER)
                     ]),
                     padding=10,
@@ -669,6 +689,7 @@ class GestaoView(ft.Column):
             border_radius=10,
             shadow=ft.BoxShadow(blur_radius=5, color=ft.Colors.BLACK12),
             margin=ft.margin.only(bottom=5),
+            width=800,
             #height=120 # Fixed height for consistency or Auto if removed
         )
 
