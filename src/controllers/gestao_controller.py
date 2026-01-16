@@ -3,6 +3,7 @@ from datetime import datetime, date
 from database.config import SessionLocal
 from repositories.user_repository import UsuarioRepository
 from repositories.transaction_repository import RegistroRepository, CategoriasRepository
+from controllers.geral_controller import criar_recibo
 
 class GestaoController:
     """
@@ -341,3 +342,7 @@ class GestaoController:
         
         self.page.add(login_view)
         self.page.update()
+        
+    def criar_recibo(self, nome, cpf, valor):
+        """Generates a receipt using the shared controller."""
+        return criar_recibo(nome, cpf, valor)

@@ -627,10 +627,10 @@ class GestaoView(ft.Column):
         # Novos botões
         ## Criar ação para eles no controller
         bt_quitar = ft.IconButton(ft.Icons.ATTACH_MONEY, icon_color=ft.Colors.GREEN_300, tooltip="Quitar", on_click=lambda e: self._show_action_dialog("quitar_transacao", d, type_t), disabled=True, icon_size=def_icon_size)
-        bt_recibo = ft.IconButton(ft.Icons.RECEIPT, icon_color=ft.Colors.BLUE_300, tooltip="Recibo", on_click=lambda e: self._show_action_dialog("recibo_transacao", d, type_t), disabled=True, icon_size=def_icon_size)
+        bt_recibo = ft.IconButton(ft.Icons.RECEIPT, icon_color=ft.Colors.BLUE_300, tooltip="Recibo", on_click=lambda e: self._show_action_dialog("recibo_transacao", d, type_t), disabled=False, icon_size=def_icon_size)
         
         bt_quitar.icon_color = ft.Colors.GREY_300
-        bt_recibo.icon_color = ft.Colors.GREY_300
+        # bt_recibo.icon_color = ft.Colors.GREY_300
 
         data_transation = ft.Row([
             ft.Icon(ft.Icons.CALENDAR_TODAY, size=14, color=ft.Colors.ORANGE_300),
@@ -853,6 +853,27 @@ class GestaoView(ft.Column):
         elif action == "divida":
             self._build_new_user_dialog_content(user_data)
             return
+        elif action == "recibo_transacao":
+             # Mostrar recibo
+             # Extrair dados
+             nome = user_data.get('nome', 'Cliente')
+             cpf = user_data.get('cpf', '000.000.000-00')
+             valor_float = float(user_data.get('valor', 0))
+             valor = f"R$ {valor_float:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+             
+             recibo_control = self.controller.criar_recibo(nome, cpf, valor)
+             
+             self.dialog = ft.AlertDialog(
+                content=ft.Container(content=recibo_control, padding=10),
+                modal=True,
+                actions=[
+                    ft.TextButton("Fechar", on_click=lambda e: self._close_dialog())
+                ]
+             )
+             self.page.open(self.dialog)
+             self.page.update()
+             return
+
         elif action == "deletar usuario":
             title = "Confirmar Exclusão"
             content = ft.Text(f"Tem certeza que deseja excluir {user_data['nome']}?")

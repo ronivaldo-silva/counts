@@ -1,6 +1,7 @@
 import flet as ft
 from database.config import SessionLocal
 from repositories.transaction_repository import RegistroRepository
+from controllers.geral_controller import criar_recibo
 
 class DashboardController:
     def __init__(self, page: ft.Page):
