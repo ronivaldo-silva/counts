@@ -1,7 +1,9 @@
+from time import sleep
 import flet as ft
 import base64
 import os
 from fpdf import FPDF
+from fpdf.enums import XPos, YPos
 
 def main(page: ft.Page):
     """
@@ -15,7 +17,8 @@ def main(page: ft.Page):
     page.bgcolor = ft.Colors.GREY_200 
 
     def gerar_pdf_bytes(nome: str, cpf: str, valor: str) -> bytes:
-        pdf = FPDF(orientation='P', unit='mm', format='A4')
+        # Custom format: 210mm wide (like A4), 190mm high (taller than A5's 148mm)
+        pdf = FPDF(orientation='P', unit='mm', format=(210, 230))
         pdf.add_page()
         
         # Absolute path to assets to ensure fpdf finds them
@@ -40,13 +43,13 @@ def main(page: ft.Page):
         # Company Info
         pdf.set_xy(90, 20)
         pdf.set_font("Helvetica", size=8)
-        pdf.cell(0, 5, "CEBUDV - N. MESTRE VICENTE MARQUES", ln=True)
+        pdf.cell(0, 5, "CEBUDV - N. MESTRE VICENTE MARQUES", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_x(90)
-        pdf.cell(0, 5, "CNPJ/CPF: 02.069.705/0001-90 IE: ISENTO", ln=True)
+        pdf.cell(0, 5, "CNPJ/CPF: 02.069.705/0001-90 IE: ISENTO", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_x(90)
-        pdf.cell(0, 5, "MARAPATA, 3801, Manaus - AM", ln=True)
+        pdf.cell(0, 5, "MARAPATA, 3801, Manaus - AM", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_x(90)
-        pdf.cell(0, 5, "CEP: 69088-068", ln=True)
+        pdf.cell(0, 5, "CEP: 69088-068", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         
         pdf.ln(10)
         
@@ -60,13 +63,13 @@ def main(page: ft.Page):
         pdf.cell(100, 10, "Recibo", border=0)
         
         pdf.set_font("Helvetica", '', 24)
-        pdf.cell(0, 10, valor, border=0, align='R', ln=True)
+        pdf.cell(0, 10, valor, border=0, align='R', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         
         pdf.ln(5)
         
         # Dashed Line (Simulated)
         pdf.set_font("Courier", '', 10)
-        pdf.cell(0, 4, "- - " * 35, align='C', ln=True)
+        pdf.cell(0, 4, "- - " * 35, align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.ln(10)
         
         # --- Body ---
@@ -89,19 +92,21 @@ def main(page: ft.Page):
         # --- Footer & Signature ---
         data_local = "Manaus (AM), 05 de janeiro de 2026"
         pdf.set_font("Helvetica", size=11)
-        pdf.cell(0, 5, data_local, align='C', ln=True)
+        pdf.cell(0, 5, data_local, align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         
         pdf.ln(5)
         
         # Signature Image
         # Save X, Y to overlapping
-        sig_x = (210 - 50) / 2 # Center ~ 50mm width image
-        sig_y = pdf.get_y()
+        # Increased size to 70mm
+        sig_width = 80
+        sig_x = (210 - sig_width) / 2 # Center based on A4/A5-Land width (210mm)
+        sig_y = pdf.get_y() # Lowered by ~15mm from previous (-10) to (+5) -> 7-8mm visually down per request
         
         ass_path = os.path.join(assets_dir, "recibo_assinatura.png")
         try:
              if os.path.exists(ass_path):
-                pdf.image(ass_path, x=sig_x, y=sig_y, w=50)
+                pdf.image(ass_path, x=sig_x, y=sig_y, w=sig_width)
              else:
                  print(f"Aviso: Assinatura não encontrada em {ass_path}")
 
@@ -121,11 +126,13 @@ def main(page: ft.Page):
         assinatura_doc = "CNPJ/CPF: 02.069.705/0001-90"
         
         pdf.set_font("Helvetica", 'B', 10)
-        pdf.cell(0, 5, assinatura_nome, align='C', ln=True)
+        pdf.cell(0, 5, assinatura_nome, align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_font("Helvetica", '', 10)
-        pdf.cell(0, 5, assinatura_doc, align='C', ln=True)
+        pdf.cell(0, 5, assinatura_doc, align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         
-        return pdf.output() # Returns bytearray
+        pdf_bit = pdf.output()
+
+        return pdf_bit # Returns bytearray
 
     def criar_recibo(nome: str, cpf: str, valor: str):
         # ... (Existing Flet Receipt Code Omitted for Brevity - Keeping Logic) ...
@@ -187,8 +194,33 @@ def main(page: ft.Page):
         valor = "R$ 120,00"
         
         pdf_bytes = gerar_pdf_bytes(nome, cpf, valor)
-        b64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
-        page.launch_url(f"data:application/pdf;base64,{b64_pdf}")
+        
+        # Strategy: Save to 'assets' folder and launch URL to download
+        # This bypasses browser security blocks on data: URIs
+        import uuid
+        filename = f"recibo_{uuid.uuid4().hex}.pdf"
+        
+        # Resolve assets directory
+        current_dir = os.path.dirname(__file__)
+        assets_dir = os.path.join(current_dir, "assets")
+        save_path = os.path.join(assets_dir, filename)
+        
+        try:
+            with open(save_path, "wb") as f:
+                f.write(pdf_bytes)
+            
+            print(f"Arquivo temporário salvo em: {save_path}")
+            page.overlay.append(ft.SnackBar(content=ft.Text(f"Download iniciado: {filename}"), open=True))
+            page.update()
+            
+            # Launch URL pointing to the static file served by Flet
+            # web_window_name="_blank" forces a new tab (browser usually downloads PDFs or opens them)
+            page.launch_url(f"/{filename}", web_window_name="_blank")
+            
+        except Exception as ex:
+            print(f"Erro ao salvar/baixar PDF: {ex}")
+            page.overlay.append(ft.SnackBar(content=ft.Text(f"Erro: {ex}"), open=True))
+            page.update()
 
     # Criando o recibo visual
     recibo = criar_recibo("ANTONIA IVANILCE CASTRO DA SILVA", "624.121.322-91", "R$ 120,00")
@@ -211,4 +243,5 @@ def main(page: ft.Page):
     )
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    # Configure assets_dir to serve files from the 'assets' folder
+    ft.app(target=main, assets_dir="assets")
