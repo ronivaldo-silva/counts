@@ -4,8 +4,15 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # Default to Counts Postgres DB
+# Local Connection (Backup)
+LOCAL_DATABASE_URL = "postgresql://userapp:Li0nt0g3ro!@localhost:5432/Counts"
+
+# Neon Tech Connection (New Primary)
+NEON_DATABASE_URL = "postgresql://neondb_owner:npg_ajvtGH2FU3ri@ep-divine-shadow-acn5sul1-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+
 # For Postgres, use: postgresql://user:password@host:port/dbname
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://userapp:Li0nt0g3ro!@localhost:5432/Counts")
+# Prioritiza Variável de Ambiente > Neon > Local (se quiser voltar, basta trocar aqui)
+DATABASE_URL = os.getenv("DATABASE_URL", NEON_DATABASE_URL)
 
 # Fix for Render/Heroku typically using 'postgres://' which SQLAlchemy doesn't like anymore
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):

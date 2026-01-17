@@ -1,0 +1,15 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+.env
+.DS_Store
+storage/
+reader/
+tests/
+testes.py
+setup_database.py
+README.md
+pyproject.toml
+src/testes.py
