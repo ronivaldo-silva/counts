@@ -205,8 +205,8 @@ def criar_recibo(nome: str, cpf: str, valor: str):
     assinatura_nome = "CEBUDV - N. MESTRE VICENTE MARQUES"
     assinatura_doc = "CNPJ/CPF: 02.069.705/0001-90"
 
-    logo_file = "assets/udv_logo.png"
-    assinatura_file = "assets/recibo_assinatura.png"
+    logo_file = "udv_logo.png"
+    assinatura_file = "recibo_assinatura.png"
 
     # --- 2. Variáveis de Elementos ---
     # Header
