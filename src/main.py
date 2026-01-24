@@ -65,7 +65,15 @@ def main(page: ft.Page):
 
 # Mount the Flet App on the FastAPI instance
 # assets_dir="assets" is assuming src/assets exists relative to this file
-app.mount("/", ft.run(main, export_asgi_app=True, assets_dir="assets"))
+app.mount(
+    "/",
+    ft.run(
+        main=main,
+        view=ft.AppView.FLET_APP_WEB,
+        export_asgi_app=True,
+        assets_dir="src/assets",
+    ),
+)
 
 if __name__ == "__main__":
     # No Render/Cloud Run, usar a porta fornecida pela variável PORT
