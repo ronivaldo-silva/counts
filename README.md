@@ -1,6 +1,71 @@
 # Counts2 app
 
-## Run the app
+Sistema de gestão de contas desenvolvido com Flet e PostgreSQL.
+
+## ⚙️ Configuração de Ambiente
+
+### Variáveis de Ambiente
+
+O projeto usa variáveis de ambiente para gerenciar credenciais com segurança:
+
+1. **Copie o arquivo de exemplo:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Configure DATABASE_URL no `.env`:**
+   ```env
+   # Para Neon Tech (Produção)
+   DATABASE_URL=postgresql://seu-usuario:sua-senha@seu-host.neon.tech/seu-db?sslmode=require
+
+   # OU para desenvolvimento local
+   DATABASE_URL=postgresql://userapp:Li0nt0g3ro!@localhost:5432/Counts
+   ```
+
+**Ordem de Prioridade:**
+1. `DATABASE_URL` do arquivo `.env` (desenvolvimento local)
+2. `DATABASE_URL` injetada pelo Google Cloud/Render (produção)
+3. `LOCAL_DATABASE_URL` (fallback hardcoded para localhost)
+
+**🔒 Segurança:**
+- ✅ Credenciais **NUNCA** estão no código
+- ✅ `.env` está no `.gitignore` e `.dockerignore`
+- ✅ Use Secret Manager no Google Cloud para produção
+
+## 🚀 Deploy no Google Cloud
+
+### Método Rápido (Script Automatizado)
+
+```powershell
+./deploy.ps1
+```
+
+O script irá guiá-lo através de:
+- Seleção do projeto Google Cloud
+- Configuração de variáveis de ambiente (Secret Manager ou direto)
+- Build da imagem Docker
+- Deploy no Cloud Run
+
+### Método Manual
+
+Consulte o guia completo em [`deploy-gcloud.md`](deploy-gcloud.md)
+
+**Comandos Básicos:**
+```bash
+# Deploy rápido
+gcloud run deploy counts-app \
+  --source . \
+  --platform managed \
+  --region southamerica-east1 \
+  --allow-unauthenticated
+
+# Configurar variável de ambiente
+gcloud run services update counts-app \
+  --region southamerica-east1 \
+  --set-env-vars DATABASE_URL="sua-database-url"
+```
+
+## 🏃 Run the app
 
 ### uv
 

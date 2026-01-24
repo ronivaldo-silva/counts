@@ -56,6 +56,7 @@ class GestaoController:
         user_name = trans.usuario.nome if trans.usuario else "Desconhecido"
         user_cpf = trans.usuario.cpf if trans.usuario else ""
         category_name = trans.categoria_rel.categoria if trans.categoria_rel else "Sem Categoria"
+        classificacao_name = trans.classificacao_rel.classificacao if trans.classificacao_rel else "Sem Classificação"
 
         # Safe date formatting
         data_divida_str = trans.data_debito.strftime("%Y-%m-%d") if trans.data_debito else ""
@@ -76,7 +77,8 @@ class GestaoController:
             "data_prevista": data_prevista_str,
             "data_entrada": data_entrada_str,
             "data": data_divida_str if type_str == 'DEBT' else data_entrada_str, # Legacy/Compat field?
-            "type": type_str
+            "type": type_str,
+            'classificacao': classificacao_name
         }
     def _update_view_gests(self):
         self.view.update_usuarios_table()
@@ -140,12 +142,13 @@ class GestaoController:
         
         if not search_term:
             return results
-                
+        
         search = search_term.lower()
         return [d for d in results if 
                 search in d['cpf'].lower() or 
                 search in d['nome'].lower() or 
-                search in d['categoria'].lower()]
+                search in d['categoria'].lower() or 
+                search in d['classificacao'].lower()]
 
     def get_entradas(self, search_term=""):
         """Returns a filtered list of payments."""
@@ -265,6 +268,32 @@ class GestaoController:
             self.view.show_message("Transação removida com sucesso!", ft.Colors.GREEN)
         else:
             self.view.show_message("Erro ao remover transação.", ft.Colors.RED)
+
+    def quitar_divida(self, divida_data, data_pagamento):
+        """
+        Quita uma dívida criando uma entrada correspondente.
+        O sistema automaticamente recalcula os saldos via _recalculate_balances.
+        
+        Args:
+            divida_data (dict): Dicionário com dados da dívida
+            data_pagamento (str): Data do pagamento no formato YYYY-MM-DD
+        """
+        # Criar payload para entrada
+        payload = {
+            'cpf': divida_data['cpf'],
+            'categoria': divida_data['categoria'],
+            'valor': divida_data['valor'],
+            'data': data_pagamento,
+            'is_pago': True
+        }
+        
+        # Adicionar entrada (que automaticamente recalcula os saldos)
+        self._add_debt_or_payment(payload)
+        
+        # Atualizar views
+        self._update_view_gests()
+        self.view.update_reports()
+        self.view.show_message("Dívida quitada com sucesso!", ft.Colors.GREEN)
 
     def get_categorias(self):
         """Returns the list of categories as dicts."""

@@ -1,0 +1,18 @@
+runtime: python311
+
+# Configurações para Google App Engine (se necessário)
+# Use apenas se estiver usando App Engine ao invés de Cloud Run
+
+instance_class: F2
+
+# Variáveis de ambiente
+env_variables:
+  PYTHONUNBUFFERED: 1
+  # DATABASE_URL será configurado via Secret Manager ou variáveis de ambiente do console
+
+automatic_scaling:
+  target_cpu_utilization: 0.65
+  min_instances: 0
+  max_instances: 5
+
+# Se usar Cloud Run, ignore este arquivo e use apenas Dockerfile

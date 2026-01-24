@@ -1,18 +1,30 @@
 import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Default to Counts Postgres DB
-# Local Connection (Backup)
+# Carrega variáveis de ambiente do arquivo .env (se existir)
+load_dotenv()
+
+# ====================================
+# CONFIGURAÇÃO DE BANCO DE DADOS
+# ====================================
+# Ordem de Prioridade:
+# 1. DATABASE_URL (do arquivo .env ou variável de ambiente do sistema)
+# 2. LOCAL_DATABASE_URL (fallback para desenvolvimento local)
+#
+# IMPORTANTE: 
+# - Configure DATABASE_URL no arquivo .env (para dev local ou Neon Tech)
+# - Google Cloud Run/Render injetam DATABASE_URL automaticamente
+# - NUNCA commite credenciais no código (use .env que está no .gitignore)
+
+# Local Connection (Desenvolvimento - Fallback)
 LOCAL_DATABASE_URL = "postgresql://userapp:Li0nt0g3ro!@localhost:5432/Counts"
 
-# Neon Tech Connection (New Primary)
-NEON_DATABASE_URL = "postgresql://neondb_owner:npg_ajvtGH2FU3ri@ep-divine-shadow-acn5sul1-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-
-# For Postgres, use: postgresql://user:password@host:port/dbname
-# Prioritiza Variável de Ambiente > Neon > Local (se quiser voltar, basta trocar aqui)
-DATABASE_URL = os.getenv("DATABASE_URL", NEON_DATABASE_URL)
+# Busca DATABASE_URL do ambiente (.env ou sistema)
+# Se não encontrar, usa conexão local
+DATABASE_URL = os.getenv("DATABASE_URL", LOCAL_DATABASE_URL)
 
 # Fix for Render/Heroku typically using 'postgres://' which SQLAlchemy doesn't like anymore
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
@@ -79,10 +91,10 @@ def seed_basic_data():
         if db.query(Classificacao).count() == 0:
             print("🌱 Seeding Classificações...")
             classifications = [
-                Classificacao(classificacao="Pendente"),
-                Classificacao(classificacao="Vencido"),
-                Classificacao(classificacao="Pago"),
-                Classificacao(classificacao="Parcial")
+                Classificacao(classificacao="Pendente"),    # 0
+                Classificacao(classificacao="Vencido"),     # 1
+                Classificacao(classificacao="Pago"),        # 2
+                Classificacao(classificacao="Parcial")      # 3
             ]
             db.add_all(classifications)
             db.commit()
