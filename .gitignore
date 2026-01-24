@@ -160,6 +160,5 @@ cython_debug/
 #.idea/
 
 # Flet
-storage/
 src/testes.py
 DEPLOY_RENDER.md

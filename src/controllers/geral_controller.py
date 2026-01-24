@@ -33,8 +33,12 @@ def gerar_pdf_bytes(
 
     # --- Header ---
     # Logo
-    logo_path = os.path.join(assets_dir, "udv_logo.png")
     try:
+        # Resolve path absolute based on this file location
+        # src/controllers/geral_controller.py -> src/assets/udv_logo.png
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        logo_path = os.path.join(base_path, "assets", "udv_logo.png")
+
         if os.path.exists(logo_path):
             pdf.image(logo_path, x=20, y=20, w=60)
         else:
@@ -150,7 +154,7 @@ def gerar_pdf_bytes(
         pdf.get_y()
     )  # Lowered by ~15mm from previous (-10) to (+5) -> 7-8mm visually down per request
 
-    ass_path = os.path.join(assets_dir, "recibo_assinatura.png")
+    ass_path = os.path.join(base_path, "assets", "recibo_assinatura.png")
     try:
         if os.path.exists(ass_path):
             pdf.image(ass_path, x=sig_x, y=sig_y, w=sig_width)

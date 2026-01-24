@@ -1102,23 +1102,15 @@ class GestaoView(ft.Column):
 
             # Handler para download do PDF
             def download_recibo_pdf(e):
-                """Baixa o recibo em PDF via endpoint FastAPI"""
-                from urllib.parse import quote
-
-                # Construir URL com query parameters
-                # Encode dos parâmetros para segurança
-                nome_encoded = quote(nome)
-                cpf_encoded = quote(cpf)
-                valor_encoded = quote(valor)
-                categoria_encoded = quote(categoria)
-                data_encoded = quote(data) if data else ""
-
-                url = f"/download/recibo?nome={nome_encoded}&cpf={cpf_encoded}&valor={valor_encoded}&categoria={categoria_encoded}"
-                if data_encoded:
-                    url += f"&data={data_encoded}"
-
-                # Abrir URL em nova aba para download
-                self.page.launch_url(url, web_window_name="_blank")
+                """Baixa o recibo em PDF via Assets"""
+                try:
+                    url_relativa = self.controller.download_recibo_obj(
+                        nome, cpf, valor, categoria, data
+                    )
+                    self.page.launch_url(url_relativa, web_window_name="_blank")
+                except Exception as ex:
+                    print(f"Erro ao gerar PDF: {ex}")
+                    self.show_message(f"Erro ao gerar PDF: {str(ex)}", ft.Colors.RED)
 
             self.dialog = ft.AlertDialog(
                 content=ft.Container(content=recibo_control, padding=10),
