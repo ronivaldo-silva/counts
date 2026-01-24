@@ -941,7 +941,8 @@ class GestaoView(ft.Column):
 
             self.users_column.controls.append(self._build_user_card(u))
 
-        self.page.update()
+        if self.page:
+            self.page.update()
 
     def update_dividas_table(self):
         """Refreshes the Debts list."""
@@ -955,7 +956,8 @@ class GestaoView(ft.Column):
                 self._build_transaction_card(d, "divida")
             )
 
-        self.page.update()
+        if self.page:
+            self.page.update()
 
     def update_entradas_table(self):
         """Refreshes the Payments list."""
@@ -969,7 +971,8 @@ class GestaoView(ft.Column):
                 self._build_transaction_card(d, "entrada")
             )
 
-        self.page.update()
+        if self.page:
+            self.page.update()
 
     def update_reports(self):
         """Refreshes Metrics and Report Table with applied filters."""
@@ -1055,7 +1058,8 @@ class GestaoView(ft.Column):
         )
 
         self.report_list.controls = [self._build_report_item(t) for t in transactions]
-        self.page.update()
+        if self.page:
+            self.page.update()
 
     # ==========================
     # Dialog Builders & Actions

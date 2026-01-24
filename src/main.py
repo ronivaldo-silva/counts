@@ -1,5 +1,6 @@
 import flet as ft
 import os
+from dotenv import load_dotenv
 from views.login_view import LoginView
 from controllers.login_controller import LoginController
 from database.config import engine, Base, seed_basic_data
@@ -16,7 +17,7 @@ def main(page: ft.Page):
     # Seed basic data (categories, classifications, admin user)
     seed_basic_data()
 
-    page.title = "Sistema Counts2"
+    page.title = "Tesouraria Counts2"
     page.theme_mode = ft.ThemeMode.LIGHT
 
     # Initialize Controller
@@ -34,14 +35,15 @@ def main(page: ft.Page):
 
 if __name__ == "__main__":
     # No Render, usar a porta fornecida pela variável PORT
-    port = int(os.environ.get("PORT", 8400))
+    load_dotenv()
+    port = int(os.getenv("PORT", 8400))
 
     print(f"Starting Flet App on port {port}...")
 
     # In Flet 0.21+, ft.app blocks.
     # assets_dir="assets" serves files relative to this script directory (src/assets)
-    ft.app(
-        target=main,
+    ft.run(
+        main=main,
         view=ft.AppView.WEB_BROWSER,
         port=port,
         host="0.0.0.0",

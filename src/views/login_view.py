@@ -2,18 +2,20 @@ from time import sleep
 import flet as ft
 from controllers.login_controller import LoginController
 
+
 class LoginView(ft.Column):
     """
     View for the Login Screen.
     Displays CPF and Password inputs and handles user interaction.
     """
+
     def __init__(self, page: ft.Page, controller: LoginController):
         super().__init__()
         self.page = page
         self.controller: LoginController = controller
         self.alignment = ft.MainAxisAlignment.CENTER
         self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-        
+
         # UI Components
         self.cpf_input = ft.TextField(
             label="CPF",
@@ -26,7 +28,7 @@ class LoginView(ft.Column):
             # on_change=lambda e: self.controller.handle_cpf_change(e),
             autofocus=True,
         )
-        
+
         self.pw_input = ft.TextField(
             label="SENHA",
             hint_text="Digite sua SENHA",
@@ -37,8 +39,10 @@ class LoginView(ft.Column):
             on_submit=lambda e: self.controller.handle_password_submit(e),
             disabled=True,
         )
-        
-        self.msg_operation = ft.Text(value="", color=ft.Colors.RED_300, size=16, weight=ft.FontWeight.BOLD)
+
+        self.msg_operation = ft.Text(
+            value="", color=ft.Colors.RED_300, size=16, weight=ft.FontWeight.BOLD
+        )
 
         # Build UI
         self._build_ui()
@@ -87,9 +91,7 @@ class LoginView(ft.Column):
     def show_cadastro_dialog(self, titulo: str, nome: str, cpf: str):
         """Opens a dialog for password creation."""
         new_password_input = ft.TextField(
-            label="Nova Senha",
-            autofocus=True,
-            password=True
+            label="Nova Senha", autofocus=True, password=True
         )
 
         def on_done_click(e):
@@ -101,15 +103,22 @@ class LoginView(ft.Column):
             modal=True,
             content=ft.Column(
                 [
-                    ft.TextField(label='Nome', value=nome, disabled=True),
-                    ft.TextField(label='CPF', value=cpf, keyboard_type=ft.KeyboardType.NUMBER, disabled=True),
+                    ft.TextField(label="Nome", value=nome, disabled=True),
+                    ft.TextField(
+                        label="CPF",
+                        value=cpf,
+                        keyboard_type=ft.KeyboardType.NUMBER,
+                        disabled=True,
+                    ),
                     new_password_input,
                 ],
                 spacing=10,
                 height=200,
             ),
             actions=[
-                ft.IconButton(icon=ft.Icons.CANCEL, on_click=lambda e: self.page.close(dialog)),
+                ft.IconButton(
+                    icon=ft.Icons.CANCEL, on_click=lambda e: self.page.close(dialog)
+                ),
                 ft.IconButton(icon=ft.Icons.DONE, on_click=on_done_click),
             ],
         )
@@ -136,7 +145,7 @@ class LoginView(ft.Column):
                 ),
             ],
             alignment=ft.MainAxisAlignment.CENTER,
-            expand=True
+            expand=True,
         )
 
         top = ft.Row(
@@ -147,7 +156,13 @@ class LoginView(ft.Column):
                         ft.Divider(height=4, color=ft.Colors.AMBER_400, thickness=2),
                         ft.Column(
                             [
-                                ft.Text("Login com CPF", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_600, text_align=ft.TextAlign.CENTER),
+                                ft.Text(
+                                    "Login com CPF",
+                                    size=20,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=ft.Colors.BLUE_600,
+                                    text_align=ft.TextAlign.CENTER,
+                                ),
                             ],
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                         ),
@@ -156,7 +171,7 @@ class LoginView(ft.Column):
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
             ],
-            alignment=ft.MainAxisAlignment.CENTER
+            alignment=ft.MainAxisAlignment.CENTER,
         )
 
         start_form = ft.Row(
@@ -189,13 +204,7 @@ class LoginView(ft.Column):
                 ),
             ],
             alignment=ft.MainAxisAlignment.CENTER,
-            spacing=20
+            spacing=20,
         )
 
-        self.controls = [
-            top,
-            start_form,
-            senha_form,
-            btn_actions,
-            self.msg_operation
-        ]
+        self.controls = [top, start_form, senha_form, btn_actions, self.msg_operation]
