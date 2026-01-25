@@ -7,10 +7,10 @@ class LoginView(ft.Column):
     View for the Login Screen.
     Displays CPF and Password inputs and handles user interaction.
     """
-    def __init__(self, page: ft.Page, controller: LoginController):
+    def __init__(self, page:ft.Page, controller:LoginController):
         super().__init__()
-        self.page = page
-        self.controller: LoginController = controller
+        self._page = page
+        self.controller:LoginController = controller
         self.alignment = ft.MainAxisAlignment.CENTER
         self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         
@@ -65,7 +65,7 @@ class LoginView(ft.Column):
         self.pw_input.disabled = True
         self.msg_operation.value = ""
         self.cpf_input.focus()
-        self.page.update()
+        self._page.update()
 
     # ==========================
     # UI Helpers
@@ -94,7 +94,7 @@ class LoginView(ft.Column):
 
         def on_done_click(e):
             self.controller.handle_cadastro_submit(new_password_input.value)
-            self.page.close(dialog)
+            self._page.close(dialog)
 
         dialog = ft.AlertDialog(
             title=ft.Text(titulo),
@@ -109,12 +109,12 @@ class LoginView(ft.Column):
                 height=200,
             ),
             actions=[
-                ft.IconButton(icon=ft.Icons.CANCEL, on_click=lambda e: self.page.close(dialog)),
+                ft.IconButton(icon=ft.Icons.CANCEL, on_click=lambda e: self._page.close(dialog)),
                 ft.IconButton(icon=ft.Icons.DONE, on_click=on_done_click),
             ],
         )
-        self.page.open(dialog)
-        self.page.update()
+        self._page.open(dialog)
+        self._page.update()
 
     # ==========================
     # Layout Builder

@@ -10,7 +10,7 @@ class GestaoView(ft.Column):
     """
     def __init__(self, page: ft.Page, controller: GestaoController):
         super().__init__()
-        self.page = page
+        self._page = page
         self.controller = controller
         self.expand = True
         
@@ -23,7 +23,7 @@ class GestaoView(ft.Column):
             first_date=datetime(2020, 1, 1),
             last_date=datetime(2030, 12, 31),
         )
-        self.page.overlay.append(self.date_picker)
+        self._page.overlay.append(self.date_picker)
 
     # ==========================
     # Helpers
@@ -31,13 +31,13 @@ class GestaoView(ft.Column):
 
     def show_message(self, message: str, color: str = ft.Colors.RED):
         """Displays a SnackBar message."""
-        self.page.snack_bar = ft.SnackBar(content=ft.Text(message), bgcolor=color)
-        self.page.snack_bar.open = True
-        self.page.update()
+        self._page.snack_bar = ft.SnackBar(content=ft.Text(message), bgcolor=color)
+        self._page.snack_bar.open = True
+        self._page.update()
 
     def _close_dialog(self):
         """Closes the currently open dialog."""
-        self.page.close(self.dialog)
+        self._page.close(self.dialog)
 
     def _on_date_change(self, e):
         """Handles DatePicker selection updates."""
@@ -48,7 +48,7 @@ class GestaoView(ft.Column):
             self.nu_data.value = self.date_picker.value.strftime("%Y-%m-%d")
         if hasattr(self, 'et_data'):
             self.et_data.value = self.date_picker.value.strftime("%Y-%m-%d")
-        self.page.update()
+        self._page.update()
 
     # ==========================
     # Tab Builders
@@ -71,7 +71,7 @@ class GestaoView(ft.Column):
         
         bt_new_user = ft.Row(
             [
-                ft.ElevatedButton(
+                ft.FilledButton(
                     "Novo",
                     icon=ft.Icons.PERSON_ADD,
                     bgcolor=ft.Colors.BLUE,
@@ -117,7 +117,7 @@ class GestaoView(ft.Column):
         
         bt_new_divida = ft.Row(
             [
-                ft.ElevatedButton(
+                ft.FilledButton(
                     "Novo",
                     icon=ft.Icons.ADD,
                     bgcolor=ft.Colors.ORANGE,
@@ -161,7 +161,7 @@ class GestaoView(ft.Column):
         
         bt_new_entrada = ft.Row(
             [
-                ft.ElevatedButton(
+                ft.FilledButton(
                     "Novo",
                     icon=ft.Icons.ADD,
                     bgcolor=ft.Colors.GREEN,
@@ -237,7 +237,7 @@ class GestaoView(ft.Column):
             hint_text="Selecione",
             suffix=ft.IconButton(
                 icon=ft.Icons.CALENDAR_MONTH,
-                on_click=lambda e: self.page.open(self.filter_date_picker_inicial)
+                on_click=lambda e: self._page.show_dialog(self.filter_date_picker_inicial)
             )
         )
         
@@ -249,7 +249,7 @@ class GestaoView(ft.Column):
             hint_text="Selecione",
             suffix=ft.IconButton(
                 icon=ft.Icons.CALENDAR_MONTH,
-                on_click=lambda e: self.page.open(self.filter_date_picker_final)
+                on_click=lambda e: self._page.show_dialog(self.filter_date_picker_final)
             )
         )
         
@@ -282,14 +282,14 @@ class GestaoView(ft.Column):
                 ft.Row([
                     self.filter_data_inicial,
                     self.filter_data_final,
-                    ft.ElevatedButton(
+                    ft.FilledButton(
                         "Aplicar Filtros",
                         icon=ft.Icons.FILTER_ALT,
                         bgcolor=ft.Colors.BLUE,
                         color=ft.Colors.WHITE,
                         on_click=lambda e: self.update_reports()
                     ),
-                    ft.ElevatedButton(
+                    ft.FilledButton(
                         "Limpar Filtros",
                         icon=ft.Icons.CLEAR,
                         bgcolor=ft.Colors.ORANGE,
@@ -301,7 +301,7 @@ class GestaoView(ft.Column):
             padding=15,
             bgcolor=ft.Colors.GREY_100,
             border_radius=10,
-            margin=ft.margin.only(bottom=20)
+            margin=ft.Margin.only(bottom=20)
         )
         
         self.report_table = ft.DataTable(
@@ -386,7 +386,7 @@ class GestaoView(ft.Column):
             hint_text="Selecione",
             suffix=ft.IconButton(
                 icon=ft.Icons.CALENDAR_MONTH,
-                on_click=lambda e: self.page.open(self.filter_date_picker_inicial)
+                on_click=lambda e: self._page.show_dialog(self.filter_date_picker_inicial)
             ),
              col={"xs": 12, "md": 6}
         )
@@ -398,7 +398,7 @@ class GestaoView(ft.Column):
             hint_text="Selecione",
             suffix=ft.IconButton(
                 icon=ft.Icons.CALENDAR_MONTH,
-                on_click=lambda e: self.page.open(self.filter_date_picker_final)
+                on_click=lambda e: self._page.show_dialog(self.filter_date_picker_final)
             ),
              col={"xs": 12, "md": 6}
         )
@@ -409,7 +409,7 @@ class GestaoView(ft.Column):
                 first_date=datetime(2020, 1, 1),
                 last_date=datetime(2030, 12, 31)
             )
-            self.page.overlay.append(self.filter_date_picker_inicial)
+            self._page.overlay.append(self.filter_date_picker_inicial)
         
         if not hasattr(self, 'filter_date_picker_final'):
             self.filter_date_picker_final = ft.DatePicker(
@@ -417,7 +417,7 @@ class GestaoView(ft.Column):
                 first_date=datetime(2020, 1, 1),
                 last_date=datetime(2030, 12, 31)
             )
-            self.page.overlay.append(self.filter_date_picker_final)
+            self._page.overlay.append(self.filter_date_picker_final)
     
         # Metrics Container
         self.metrics_container = ft.Row(wrap=True, spacing=20)
@@ -434,7 +434,7 @@ class GestaoView(ft.Column):
                 ft.Row([
                     ft.Text("Métricas", size=20, weight=ft.FontWeight.BOLD),
                     ft.Container(expand=True),
-                    ft.ElevatedButton(
+                    ft.FilledButton(
                         "Filtros",
                         icon=ft.Icons.FILTER_LIST,
                         bgcolor=ft.Colors.BLUE,
@@ -448,7 +448,7 @@ class GestaoView(ft.Column):
                 ft.Container(
                     content=self.report_list,
                     expand=True,
-                    padding=ft.padding.only(bottom=20)
+                    padding=ft.Padding.only(bottom=20)
                 ) 
             ],
             expand=True,
@@ -462,8 +462,8 @@ class GestaoView(ft.Column):
         """Shows the filters in a responsive Dialog."""
         
         dialog_width = 500
-        if self.page:
-             dialog_width = min(self.page.width - 20, 500)
+        if self._page:
+             dialog_width = min(self._page.width - 20, 500)
 
         content = ft.Container(
             content=ft.Column([
@@ -480,7 +480,7 @@ class GestaoView(ft.Column):
         self.filter_dialog = ft.AlertDialog(
             content=content,
             actions=[
-                ft.ElevatedButton(
+                ft.FilledButton(
                     "Aplicar",
                     icon=ft.Icons.CHECK,
                     bgcolor=ft.Colors.GREEN,
@@ -492,17 +492,17 @@ class GestaoView(ft.Column):
                     icon=ft.Icons.CLEAR,
                     on_click=lambda e: self._clear_filters()
                 ),
-                ft.TextButton("Cancelar", on_click=lambda e: self.page.close(self.filter_dialog))
+                ft.TextButton("Cancelar", on_click=lambda e: self._page.close(self.filter_dialog))
             ],
             modal=True,
             actions_alignment=ft.MainAxisAlignment.END
         )
-        self.page.open(self.filter_dialog)
+        self._page.show_dialog(self.filter_dialog)
 
     def _apply_filters_and_close(self):
         self.update_reports()
         if hasattr(self, 'filter_dialog'):
-            self.page.close(self.filter_dialog)
+            self._page.close(self.filter_dialog)
 
     def _build_report_item(self, t):
         """Helper to build a responsive report item row."""
@@ -530,7 +530,7 @@ class GestaoView(ft.Column):
                 # Category
                 ft.Column([
                     ft.Container(
-                        content=ft.Text(t['categoria'], size=12, color=ft.Colors.BLACK87),
+                        content=ft.Text(t['categoria'], size=12, color=ft.Colors.BLACK_87),
                         bgcolor=ft.Colors.WHITE,
                         padding=5,
                         border_radius=5,
@@ -551,8 +551,8 @@ class GestaoView(ft.Column):
             padding=10,
             bgcolor=bg_color,
             border_radius=8,
-            border=ft.border.only(left=ft.BorderSide(5, color)),
-            margin=ft.margin.only(bottom=10)
+            border=ft.Border.only(left=ft.BorderSide(5, color)),
+            margin=ft.Margin.only(bottom=10)
         )
 
     def _build_metric_card(self, title, value, color):
@@ -613,7 +613,7 @@ class GestaoView(ft.Column):
             bgcolor=ft.Colors.WHITE,
             border_radius=10,
             shadow=ft.BoxShadow(blur_radius=5, color=ft.Colors.BLACK12),
-            margin=ft.margin.only(bottom=5)
+            margin=ft.Margin.only(bottom=5)
         )
 
     def _build_transaction_card(self, d, type_t):
@@ -662,7 +662,7 @@ class GestaoView(ft.Column):
 
         return ft.Container(
             content=ft.Row([
-                ft.Container(width=5, bgcolor=color, border_radius=ft.border_radius.only(top_left=10, bottom_left=10)),
+                ft.Container(width=5, bgcolor=color, border_radius=ft.BorderRadius.only(top_left=10, bottom_left=10)),
                 ft.Container(
                     content=ft.Column([
                         ft.Row([
@@ -688,7 +688,7 @@ class GestaoView(ft.Column):
             bgcolor=ft.Colors.WHITE,
             border_radius=10,
             shadow=ft.BoxShadow(blur_radius=5, color=ft.Colors.BLACK12),
-            margin=ft.margin.only(bottom=5),
+            margin=ft.Margin.only(bottom=5),
             width=800,
             #height=120 # Fixed height for consistency or Auto if removed
         )
@@ -737,7 +737,7 @@ class GestaoView(ft.Column):
             
             self.users_column.controls.append(self._build_user_card(u))
 
-        self.page.update()
+        self._page.update()
 
     def deprecate_update_dividas_table(self):
         """Refreshes the Debts table."""
@@ -750,7 +750,7 @@ class GestaoView(ft.Column):
         for d in data:
             self.dividas_column.controls.append(self._build_transaction_card(d, "divida"))
             
-        self.page.update()
+        self._page.update()
 
     def deprecate_update_entradas_table(self):
         """Refreshes the Payments table."""
@@ -763,7 +763,7 @@ class GestaoView(ft.Column):
         for d in data:
             self.entradas_column.controls.append(self._build_transaction_card(d, "entrada"))
             
-        self.page.update()
+        self._page.update()
 
     def update_reports(self):
         """Refreshes Metrics and Report Table with applied filters."""
@@ -824,7 +824,7 @@ class GestaoView(ft.Column):
         
         
         self.report_list.controls = [self._build_report_item(t) for t in transactions]
-        self.page.update()
+        self._page.update()
 
     # ==========================
     # Dialog Builders & Actions
@@ -870,8 +870,8 @@ class GestaoView(ft.Column):
                     ft.TextButton("Fechar", on_click=lambda e: self._close_dialog())
                 ]
              )
-             self.page.open(self.dialog)
-             self.page.update()
+             self._page.show_dialog(self.dialog)
+             self._page.update() 
              return
 
         elif action == "deletar usuario":
@@ -879,14 +879,14 @@ class GestaoView(ft.Column):
             content = ft.Text(f"Tem certeza que deseja excluir {user_data['nome']}?")
             actions = [
                 ft.TextButton("Cancelar", on_click=lambda e: self._close_dialog()),
-                ft.ElevatedButton("Excluir", bgcolor=ft.Colors.RED, color=ft.Colors.WHITE, on_click=lambda e: self._confirm_delete_user(user_data['cpf']))
+                ft.FilledButton("Excluir", bgcolor=ft.Colors.RED, color=ft.Colors.WHITE, on_click=lambda e: self._confirm_delete_user(user_data['cpf']))
             ]
         elif action == "deletar transacao":
             title = "Confirmar Exclusão"
             content = ft.Text(f"Tem certeza que deseja excluir o registro de:\n {user_data['nome']}\n {user_data['categoria']}\n {user_data['valor']}\n {user_data['data']}?")
             actions = [
                 ft.TextButton("Cancelar", on_click=lambda e: self._close_dialog()),
-                ft.ElevatedButton("Excluir", bgcolor=ft.Colors.RED, color=ft.Colors.WHITE, on_click=lambda e: self._confirm_delete_transaction(user_data['id']))
+                ft.FilledButton("Excluir", bgcolor=ft.Colors.RED, color=ft.Colors.WHITE, on_click=lambda e: self._confirm_delete_transaction(user_data['id']))
             ]
         elif action == "editar_transacao":
              self._build_edit_transaction_dialog(user_data, transaction_type)
@@ -899,8 +899,8 @@ class GestaoView(ft.Column):
             modal=True,
             # Make dialog itself responsive width if needed, or rely on content
         )
-        self.page.open(self.dialog)
-        self.page.update()
+        self._page.show_dialog(self.dialog)
+        self._page.update()
 
     def _build_new_user_dialog_content(self, user_data=None, transaction_type=None):
         """Builds content for New User or New Transaction dialog."""
@@ -994,7 +994,7 @@ class GestaoView(ft.Column):
             read_only=True,
             suffix=ft.IconButton(
                 icon=ft.Icons.CALENDAR_MONTH,
-                on_click=lambda e: self.page.open(self.date_picker)
+                on_click=lambda e: self.page.show_dialog(self.date_picker)
             ),
             col={"xs": 12, "sm": 12, "md": 12, "lg": 6}
         )
@@ -1007,7 +1007,7 @@ class GestaoView(ft.Column):
             visible=False, # Hidden by default, shown if Debt
             suffix=ft.IconButton(
                 icon=ft.Icons.CALENDAR_MONTH,
-                on_click=lambda e: self.page.open(self.date_picker_prevista)
+                on_click=lambda e: self.page.show_dialog(self.date_picker_prevista)
             ),
              col={"xs": 12, "sm": 12, "md": 12, "lg": 6}
         )
@@ -1052,8 +1052,8 @@ class GestaoView(ft.Column):
         # Triggers visibility check
         self._on_nu_toggle_change(None)
 
-        bt_salvar = ft.ElevatedButton("Salvar", bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE, on_click=self._save_new_user)
-        bt_limpar = ft.ElevatedButton("Limpar", bgcolor=ft.Colors.BLUE, color=ft.Colors.WHITE, on_click=self._clear_new_user_form)
+        bt_salvar = ft.FilledButton("Salvar", bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE, on_click=self._save_new_user)
+        bt_limpar = ft.FilledButton("Limpar", bgcolor=ft.Colors.BLUE, color=ft.Colors.WHITE, on_click=self._clear_new_user_form)
         bt_cancelar = ft.TextButton("Cancelar", on_click=lambda e: self._close_dialog())
 
         actions = [
@@ -1068,7 +1068,7 @@ class GestaoView(ft.Column):
             modal=True,
             actions_alignment=ft.MainAxisAlignment.END
         )
-        self.page.open(self.dialog)
+        self._page.show_dialog(self.dialog)
 
     def _build_edit_user_dialog_content(self, user_data):
         """Builds content for Editing a User."""
@@ -1078,8 +1078,8 @@ class GestaoView(ft.Column):
         self.eu_senha = ft.TextField(label="Senha", password=True, can_reveal_password=True, col={"xs": 12})
 
         dialog_width = 600
-        if self.page:
-             dialog_width = min(self.page.width - 20, 600)
+        if self._page:
+             dialog_width = min(self._page.width - 20, 600)
 
         content = ft.Container(
             content=ft.Column([
@@ -1095,9 +1095,9 @@ class GestaoView(ft.Column):
         )
 
         actions = [
-            ft.ElevatedButton("Salvar", bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE, on_click=self._save_edit_user),
-            ft.ElevatedButton("Limpar", bgcolor=ft.Colors.BLUE, color=ft.Colors.WHITE, on_click=self._clear_edit_user_form),
-            ft.ElevatedButton("Cancelar", bgcolor=ft.Colors.ORANGE, color=ft.Colors.WHITE, on_click=lambda e: self._close_dialog())
+            ft.FilledButton("Salvar", bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE, on_click=self._save_edit_user),
+            ft.FilledButton("Limpar", bgcolor=ft.Colors.BLUE, color=ft.Colors.WHITE, on_click=self._clear_edit_user_form),
+            ft.FilledButton("Cancelar", bgcolor=ft.Colors.ORANGE, color=ft.Colors.WHITE, on_click=lambda e: self._close_dialog())
         ]
 
         self.dialog = ft.AlertDialog(
@@ -1106,7 +1106,7 @@ class GestaoView(ft.Column):
             modal=True,
             actions_alignment=ft.MainAxisAlignment.END
         )
-        self.page.open(self.dialog)
+        self._page.show_dialog(self.dialog)
 
     def _build_edit_transaction_dialog(self, data, transaction_type):
         """Builds content for Editing a Transaction with Dropdown."""
@@ -1157,7 +1157,7 @@ class GestaoView(ft.Column):
             read_only=True,
             suffix=ft.IconButton(
                 icon=ft.Icons.CALENDAR_MONTH,
-                on_click=lambda e: self.page.open(self.et_date_picker)
+                on_click=lambda e: self._page.show_dialog(self.et_date_picker)
             ),
             col={"xs": 12, "sm": 12, "md": 12, "lg": 6}
         )
@@ -1174,7 +1174,7 @@ class GestaoView(ft.Column):
             visible=(transaction_type == "divida"),
             suffix=ft.IconButton(
                 icon=ft.Icons.CALENDAR_MONTH,
-                on_click=lambda e: self.page.open(self.et_date_picker_prevista)
+                on_click=lambda e: self.page.show_dialog(self.et_date_picker_prevista)
             ),
             col={"xs": 12, "sm": 12, "md": 12, "lg": 6}
         )
@@ -1219,8 +1219,8 @@ class GestaoView(ft.Column):
         )
         
         actions = [
-            ft.ElevatedButton("Salvar", bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE, on_click=self._save_edit_transaction),
-            ft.ElevatedButton("Cancelar", bgcolor=ft.Colors.ORANGE, color=ft.Colors.WHITE, on_click=lambda e: self._close_dialog())
+            ft.FilledButton("Salvar", bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE, on_click=self._save_edit_transaction),
+            ft.FilledButton("Cancelar", bgcolor=ft.Colors.ORANGE, color=ft.Colors.WHITE, on_click=lambda e: self._close_dialog())
         ]
         
         self.dialog = ft.AlertDialog(
@@ -1229,7 +1229,7 @@ class GestaoView(ft.Column):
             modal=True,
             actions_alignment=ft.MainAxisAlignment.END
         )
-        self.page.open(self.dialog)
+        self.page.show_dialog(self.dialog)
 
     # ==========================
     # Logic / Events
@@ -1248,7 +1248,7 @@ class GestaoView(ft.Column):
             self.nu_data.label = "Data Dívida"
             self.nu_data_label.value = "Data Dívida"
             self.nu_data_prevista.visible = True
-        self.page.update()
+        self._page.update()
 
     def _clear_new_user_form(self, e):
         if self.is_adding_transaction and hasattr(self, 'nu_original_user_data') and self.nu_original_user_data:
@@ -1266,7 +1266,7 @@ class GestaoView(ft.Column):
         self.nu_data.value = datetime.now().strftime("%Y-%m-%d")
         self.nu_data_prevista.value = datetime.now().strftime("%Y-%m-%d")
         self._on_nu_toggle_change(None)
-        self.page.update()
+        self._page.update()
 
     def _save_new_user(self, e):
         # Determine Data Source
@@ -1312,7 +1312,7 @@ class GestaoView(ft.Column):
     def _clear_edit_user_form(self, e):
         self.eu_nome.value = self.eu_original_data['nome']
         self.eu_senha.value = ""
-        self.page.update()
+        self._page.update()
 
     def _save_edit_user(self, e):
         if not self.eu_nome.value:
@@ -1357,13 +1357,13 @@ class GestaoView(ft.Column):
     def _close_dialog(self):
         """Fecha o diálogo aberto e atualiza as tabelas."""
         if hasattr(self, 'dialog') and self.dialog:
-            self.page.close(self.dialog)
+            self._page.close(self.dialog)
             self.dialog = None
         self.update_usuarios_table()
         self.update_dividas_table()
         self.update_entradas_table()
         self.update_reports()
-        self.page.update()
+        self._page.update()
     
     # ==========================
     # Filter Methods
@@ -1373,13 +1373,13 @@ class GestaoView(ft.Column):
         """Handler para quando a data inicial do filtro é selecionada."""
         if e.control.value:
             self.filter_data_inicial.value = e.control.value.strftime("%Y-%m-%d")
-            self.page.update()
+            self._page.update()
     
     def _on_filter_date_final_change(self, e):
         """Handler para quando a data final do filtro é selecionada."""
         if e.control.value:
             self.filter_data_final.value = e.control.value.strftime("%Y-%m-%d")
-            self.page.update()
+            self._page.update()
     
     def _clear_filters(self):
         """Limpa todos os filtros e atualiza os relatórios."""
@@ -1424,33 +1424,48 @@ class GestaoView(ft.Column):
         # Tabs
         self.tabs = ft.Tabs(
             selected_index=0,
+            length=4,
             animation_duration=300,
-            indicator_color=ft.Colors.ORANGE,
-            label_color=ft.Colors.BLUE,
-            unselected_label_color=ft.Colors.BLUE_200,
-            divider_color=ft.Colors.TRANSPARENT,
-            tabs=[
-                ft.Tab(
-                    text="Usuários",
-                    icon=ft.Icons.PEOPLE,
-                    content=self._build_usuarios_tab(),
-                ),
-                ft.Tab(
-                    text="Dívidas",
-                    icon=ft.Icons.MONEY_OFF,
-                    content=self._build_dividas_tab(),
-                ),
-                ft.Tab(
-                    text="Entradas",
-                    icon=ft.Icons.ATTACH_MONEY,
-                    content=self._build_entradas_tab(),
-                ),
-                ft.Tab(
-                    text="Relatórios",
-                    icon=ft.Icons.ANALYTICS,
-                    content=self._build_relatorios_tab(),
-                ),
-            ],
+            content=ft.Column(
+                expand=True,
+                controls=[
+                    ft.TabBar(
+                        indicator_color=ft.Colors.BLUE_600,
+                        indicator_size=3,
+                        tabs=[
+                            ft.Tab(
+                                label="Usuários",
+                                icon=ft.Icons.PEOPLE,
+                                adaptive=True,
+                            ),
+                            ft.Tab(
+                                label="Dívidas",
+                                icon=ft.Icons.MONEY_OFF,
+                                adaptive=True,
+                            ),
+                            ft.Tab(
+                                label="Entradas",
+                                icon=ft.Icons.ATTACH_MONEY,
+                                adaptive=True,
+                            ),
+                            ft.Tab(
+                                label="Relatórios",
+                                icon=ft.Icons.ANALYTICS,
+                                adaptive=True,
+                            ),
+                        ]
+                    ),
+                    ft.TabBarView(
+                        expand=True,
+                        controls=[
+                            self._build_usuarios_tab(),
+                            self._build_dividas_tab(),
+                            self._build_entradas_tab(),
+                            self._build_relatorios_tab()
+                        ]
+                    )
+                ]
+            ),
             expand=True,
         )
 
